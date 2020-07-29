@@ -20,7 +20,7 @@ class ConfigBase(object):
 
 class AppDefaults(Defaults):
     dir_home = os.getenv('HOME', osp.expanduser('~'))
-    dir_config = osp.join(dir_home, '/.qnote')
+    dir_config = osp.join(dir_home, '.qnote')
     fn_config = osp.join(dir_config, 'config.json')
 
 
