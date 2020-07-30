@@ -29,13 +29,28 @@ class AppConfig(ConfigBase):
         super(AppConfig, self).__init__()
         if kwargs is None:
             kwargs = {}     # first initialization
-        self.editor = EditorConfig(**kwargs.get('editor', {}))
+        self.editor = EditorConfig(**kwargs.pop('editor', {}))
+
+        # Check whether there are remaining values for configuration
+        if len(kwargs) != 0:
+            import warnings
+            msg = (
+                f'There are unknown configuration values, did you added them'
+                'by accident? {kwargs}'
+            )
+            warnings.warn(msg, RuntimeWarning)
 
     @classmethod
     def load(cls):
-        with open(AppDefaults.fn_config, 'r') as f:
-            content = json.load(f)
-        return cls(**content)
+        if not osp.exists(AppDefaults.fn_config):
+            # Config file does not exist, so we create it with default values
+            config = cls()
+            config.write()
+            return config
+        else:
+            with open(AppDefaults.fn_config, 'r') as f:
+                content = json.load(f)
+            return cls(**content)
 
     def write(self):
         os.makedirs(AppDefaults.dir_config)
