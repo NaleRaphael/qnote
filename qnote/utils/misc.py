@@ -28,6 +28,6 @@ def query_yes_no(question, default='yes', back_n_lines=0):
             return valid[choice]
         else:
             sys.stdout.write(
-                '\x1b[2APlease respond with \'yes\' or \'no\' '
-                '(or \'y\' or \'n\').\n'
+                '%sPlease respond with \'yes\' or \'no\' '
+                '(or \'y\' or \'n\').\n' % code_back
             )
