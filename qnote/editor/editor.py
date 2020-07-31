@@ -2,7 +2,9 @@ import errno, os, tempfile
 from subprocess import call
 from shutil import which
 
-from qnote.internal.exceptions import EditorNotFoundError
+from qnote.internal.exceptions import (
+    EditorNotFoundError, EditorNotSupportedError
+)
 
 
 __all__ = ['get_editor']
@@ -16,7 +18,7 @@ def get_editor(name):
     try:
         idx = lower_names.index('%seditor' % name.lower())
     except ValueError as ex:
-        raise EditorNotFoundError('Editor `%s` is not supported.' % name) from ex
+        raise EditorNotSupportedError('Editor `%s` is not supported.' % name) from ex
 
     cls_editor = getattr(this_mod, editor_names[idx])
     return cls_editor()
@@ -30,9 +32,11 @@ class EditorBase(object):
             'Attribute `executable` has not been implemented in this class.'
         )
         self.fn_executable = which(self.executable)
-        assert self.fn_executable is not None, (
-            'Executable `%s` is not found in this system.' % self.executable
-        )
+        if self.fn_executable is None:
+            raise EditorNotFoundError(
+                'Executable of editor `%s` is not found in this system.'
+                % self.executable
+            )
 
     def open(self, fn_tmp='', init_content=''):
         # Modified solution from https://stackoverflow.com/a/6309753

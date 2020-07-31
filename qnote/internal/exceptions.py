@@ -1,7 +1,15 @@
-__all__ = ['EditorNotFoundError', 'UserCancelledException']
+__all__ = [
+    'EditorNotFoundError',
+    'EditorNotSupportedError',
+    'UserCancelledException',
+]
 
 
 class EditorNotFoundError(Exception):
+    pass
+
+
+class EditorNotSupportedError(Exception):
     pass
 
 
