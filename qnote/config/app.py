@@ -30,6 +30,7 @@ class AppConfig(ConfigBase):
         if kwargs is None:
             kwargs = {}     # first initialization
         self.editor = EditorConfig(**kwargs.pop('editor', {}))
+        self.storage = StorageConfig(**kwargs.pop('storage', {}))
 
         # Check whether there are remaining values for configuration
         if len(kwargs) != 0:
@@ -65,12 +66,14 @@ class AppConfig(ConfigBase):
 
 class EditorDefaults(Defaults):
     executable = 'vim'
+    fn_tempfile = osp.join(AppDefaults.dir_config, 'note.tmp')
 
 
 class EditorConfig(ConfigBase):
     def __init__(self, **kwargs):
         super(EditorConfig, self).__init__()
         self.executable = kwargs.get('executable', EditorDefaults.executable)
+        self.fn_tempfile = kwargs.get('tempfile', EditorDefaults.fn_tempfile)
 
     def to_dict(self):
         keys = ['executable']
