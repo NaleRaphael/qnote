@@ -17,9 +17,24 @@ subcommands = {
     'notebook': cmds.NotebookCommand('notebook'),
 }
 
+
+def _process_usage(usage, delimiter='\n', skip_row=1, left_padding=0):
+    splitted = usage.split(delimiter)
+    padding_spaces = ' '*left_padding if left_padding >= 0 else ''
+    padded = ['%s%s' % (padding_spaces, v) for v in splitted[skip_row:]]
+    return delimiter.join([*splitted[:skip_row], *padded])
+
+
 def prepare_usage():
     msg = '\n'
-    msg_subs = '\n'.join([('  <prog> %s' % v.usage.lstrip())for k, v in subcommands.items()])
+    temp = []
+    n_padding = len('qnote') - 4    # 4: size of tab
+    sub_usages = [
+        '<prog> %s' % (
+            _process_usage(sc.usage.lstrip(), left_padding=n_padding)
+        ) for sc in subcommands.values()
+    ]
+    msg_subs = '\n'.join(sub_usages)
     msg += msg_subs
     regex = re.compile('<prog>')
     msg = regex.sub('qnote', msg)
@@ -33,6 +48,7 @@ class CommandEntry(cmds.Command):
     def run(self, parsed_args, config):
         known_args, unknown_args = parsed_args
         runner = subcommands[known_args.pop('cmd')]
+        runner.parent = self
         runner.main(unknown_args, config)
 
     def prepare_parser(self):

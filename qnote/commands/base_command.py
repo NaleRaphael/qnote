@@ -24,10 +24,23 @@ class Command(object):
         self.name = name
         self.description = self.__doc__
         self.no_more_subcommands = False
+        self._parent = None
+
+    @property
+    def parent(self):
+        return self._parent
+
+    @parent.setter
+    def parent(self, value):
+        if not isinstance(value, Command):
+            raise TypeError('`value` should be an instance of %s' % Command)
+        self._parent = value
 
     @property
     def usage(self):
-        return re.compile('<prog>').sub(self.name, self._usage)
+        parent_name = '' if self.parent is None else self.parent.name
+        prog_name = '%s %s' % (parent_name, self.name)
+        return re.compile('<prog>').sub(prog_name, self._usage)
 
     def run(self, parsed_args, config):
         """Run command.
