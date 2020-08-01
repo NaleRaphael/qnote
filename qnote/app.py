@@ -1,7 +1,8 @@
 from __future__ import absolute_import
-from argparse import ArgumentParser
 import re, sys
+from argparse import SUPPRESS as ARG_SUPPRESS
 
+from qnote.cli.parser import CustomArgumentParser, PassableHelpAction
 from qnote.config import AppConfig
 import qnote.commands as cmds
 
@@ -35,10 +36,18 @@ class CommandEntry(cmds.Command):
         runner.main(unknown_args, config)
 
     def prepare_parser(self):
-        parser = ArgumentParser(prog='qnote', usage=prepare_usage())
+        parser = CustomArgumentParser(
+            prog='qnote', usage=prepare_usage(), add_help=False,
+        )
         parser.add_argument(
             'cmd', metavar='cmd', choices=list(subcommands.keys()),
-            help='Subcommands')
+            help='Subcommands'
+        )
+        parser.add_argument(
+            '-h', '--help', action=PassableHelpAction,
+            default=ARG_SUPPRESS,
+            help='Show this help message and exit.'
+        )
         return parser
 
 
