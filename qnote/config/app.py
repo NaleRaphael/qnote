@@ -31,6 +31,7 @@ class AppConfig(ConfigBase):
             kwargs = {}     # first initialization
         self.editor = EditorConfig(**kwargs.pop('editor', {}))
         self.storage = StorageConfig(**kwargs.pop('storage', {}))
+        self.tag = TagConfig(**kwargs.pop('tag', {}))
 
         # Check whether there are remaining values for configuration
         if len(kwargs) != 0:
@@ -54,7 +55,7 @@ class AppConfig(ConfigBase):
             return cls(**content)
 
     def write(self):
-        os.makedirs(AppDefaults.dir_config)
+        os.makedirs(AppDefaults.dir_config, exist_ok=True)
         with open(AppDefaults.fn_config, 'w') as f:
             json.dump(self.to_dict(), f, indent=2)
 
@@ -62,6 +63,7 @@ class AppConfig(ConfigBase):
         return {
             'editor': self.editor.to_dict(),
             'storage': self.storage.to_dict(),
+            'tag': self.tag.to_dict(),
         }
 
 
@@ -98,4 +100,33 @@ class StorageConfig(ConfigBase):
 
     def to_dict(self):
         keys = ['type', 'dir_root']
+        return {k: getattr(self, k) for k in keys}
+
+
+class TagDefaults(Defaults):
+    """
+    auto_parse : bool
+        **For interactive mode only.**
+        Automatically parsing content and create tags from it. If this feature
+        is enabled, parsed tags will be pre-written in to the temporary file
+        for editing tags (second stage of adding note).
+    auto_remove_from_content : bool
+        **For interactive mode only.**
+        Remove parsed tags from note content. Note that this feature only works
+        when `auto_parse` is True.
+    """
+    auto_parse = True
+    auto_remove_from_content = True
+
+
+class TagConfig(ConfigBase):
+    def __init__(self, **kwargs):
+        super(TagConfig, self).__init__()
+        self.auto_parse = kwargs.get('auto_parse', TagDefaults.auto_parse)
+        self.auto_remove_from_content = kwargs.get(
+            'auto_remove_from_content', TagDefaults.auto_remove_from_content
+        )
+
+    def to_dict(self):
+        keys = ['auto_parse', 'auto_remove_from_content']
         return {k: getattr(self, k) for k in keys}

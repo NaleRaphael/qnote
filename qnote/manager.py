@@ -49,7 +49,7 @@ class NoteManager(object):
                 sys.exit(1)
 
             if not use_default_editor:
-                sys.exit(1)
+                sys.exit(2)     # no available editors and execution is aborted
             try:
                 content = open_default_editor(
                     fn_tmp=self.config.editor.fn_tempfile, init_content=note_template
@@ -61,14 +61,21 @@ class NoteManager(object):
                 fn_tmp=self.config.editor.fn_tempfile, init_content=note_template
             )
 
+        # No changes in content, nothing to add. Exit the program normally.
+        if content == note_template:
+            sys.exit(0)
+
         # - remove template string
-        regex = re.compile(re.escape(note_template))
+        regex = re.compile(re.escape(note_template.strip()))
         content = regex.sub('', content)
 
         # - auto parsing tags from note content
-        # TODO: add a config option to disable this feature
-        # TODO: add a config option to remove parsed tags from content
-        tags = Tags.from_string_content(content)
+        if self.config.tag.auto_parse:
+            tags = Tags.from_string_content(content)
+            if self.config.tag.auto_remove_from_content:
+                content = remove_tags_from_string(content, tags)
+        else:
+            tags = []
 
         try:
             print('Tags: %s' % str(tags))
@@ -113,3 +120,11 @@ def open_default_editor(fn_tmp='', init_content=''):
     if retval is None:
         raise UserCancelledException('Operation is cancelled by user.')
     return retval['content']
+
+
+def remove_tags_from_string(string, tags):
+    result = string
+    for tag in tags:
+        regex = re.compile(re.escape(str(tag)))
+        result = regex.sub('', result)
+    return result
