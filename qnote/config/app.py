@@ -61,6 +61,7 @@ class AppConfig(ConfigBase):
     def to_dict(self):
         return {
             'editor': self.editor.to_dict(),
+            'storage': self.storage.to_dict(),
         }
 
 
@@ -77,4 +78,24 @@ class EditorConfig(ConfigBase):
 
     def to_dict(self):
         keys = ['executable']
+        return {k: getattr(self, k) for k in keys}
+
+
+class StorageDefaults(Defaults):
+    valid_types = ['sqlite']
+    type = 'sqlite'
+    dir_root = osp.join(AppDefaults.dir_config, 'storage')
+
+
+class StorageConfig(ConfigBase):
+    def __init__(self, **kwargs):
+        super(StorageConfig, self).__init__()
+        self.type = kwargs.get('type', StorageDefaults.type)
+        if self.type not in StorageDefaults.valid_types:
+            raise ValueError('Type of storage "%s" is not supported, possible'
+                ' choices: %s' % (self.type, StorageDefaults.valid_types))
+        self.dir_root = kwargs.get('dir_root', StorageDefaults.dir_root)
+
+    def to_dict(self):
+        keys = ['type', 'dir_root']
         return {k: getattr(self, k) for k in keys}
