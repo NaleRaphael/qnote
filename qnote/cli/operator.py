@@ -14,7 +14,7 @@ from qnote.vendor.inquirer import (
 from qnote.vendor.inquirer import prompt as inquirer_prompt
 
 
-__all__ = ['NoteManager']
+__all__ = ['NoteOperator', 'NotebookOperator']
 
 
 note_template = """# Note content (this line can be removed)
@@ -22,7 +22,7 @@ note_template = """# Note content (this line can be removed)
 """
 
 
-class NoteManager(object):
+class NoteOperator(object):
     def __init__(self, config):
         self.config = config
 
@@ -87,7 +87,7 @@ class NoteManager(object):
             sys.exit(1)
 
         if not continue_edit_tags:
-            return Note.create(raw_content=content, tag_names=tags)
+            return Note.create(content, tags)
 
         # - let user edit tags
         if editor is None and use_default_editor:
@@ -102,12 +102,23 @@ class NoteManager(object):
                 fn_tmp=self.config.editor.fn_tempfile, init_content=str(tags)
             )
         tags = Tags.from_string_content(raw_tags)
-        return Note.create(raw_content=content, tag_names=tags)
+        return Note.create(content, tags)
 
     def edit_note(self, uuid):
         raise NotImplementedError
 
     def search_note(self):
+        raise NotImplementedError
+
+
+class NotebookOperator(object):
+    def __init__(self, config):
+        self.config = config
+
+    def create_notebook(self):
+        raise NotImplementedError
+
+    def load_notebook(self):
         raise NotImplementedError
 
 
