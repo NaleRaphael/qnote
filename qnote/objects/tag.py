@@ -40,6 +40,9 @@ class Tags(object):
     def __iter__(self):
         return iter(self.collection)
 
+    def __getitem__(self, idx):
+        return self.collection[idx]
+
     def add(self, name):
         self.collection.append(Tag(name))
 
