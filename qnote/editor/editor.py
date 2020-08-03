@@ -3,7 +3,7 @@ from subprocess import call
 from shutil import which
 
 from qnote.internal.exceptions import (
-    EditorNotFoundError, EditorNotSupportedError
+    EditorNotFoundException, EditorNotSupportedException
 )
 
 
@@ -18,7 +18,7 @@ def get_editor(name):
     try:
         idx = lower_names.index('%seditor' % name.lower())
     except ValueError as ex:
-        raise EditorNotSupportedError('Editor `%s` is not supported.' % name) from ex
+        raise EditorNotSupportedException('Editor `%s` is not supported.' % name) from ex
 
     cls_editor = getattr(this_mod, editor_names[idx])
     return cls_editor()
@@ -33,7 +33,7 @@ class EditorBase(object):
         )
         self.fn_executable = which(self.executable)
         if self.fn_executable is None:
-            raise EditorNotFoundError(
+            raise EditorNotFoundException(
                 'Executable of editor `%s` is not found in this system.'
                 % self.executable
             )

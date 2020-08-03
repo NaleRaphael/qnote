@@ -5,7 +5,8 @@ from qnote.config import AppConfig
 from qnote.editor import get_editor
 from qnote.objects import Notebook, Note, Tag, Tags
 from qnote.internal.exceptions import (
-    EditorNotFoundError, EditorNotSupportedError, UserCancelledException
+    EditorNotFoundException, EditorNotSupportedException,
+    UserCancelledException
 )
 from qnote.utils import query_yes_no
 from qnote.vendor.inquirer import (
@@ -32,7 +33,7 @@ class NoteOperator(object):
 
         try:
             editor = get_editor(self.config.editor.executable)
-        except (EditorNotFoundError, EditorNotSupportedError) as ex:
+        except (EditorNotFoundException, EditorNotSupportedException) as ex:
             # fallback
             msg = (
                 '%s '
