@@ -14,11 +14,11 @@ def is_valid_uuid4(x):
 
 
 class Note(object):
-    required_fields = ['_uuid', 'create_time', 'update_time', 'content', 'tags']
+    required_fields = ['uuid', 'create_time', 'update_time', 'content', 'tags']
 
-    def __init__(self, _uuid, timestamp, content=None, tags=None):
-        if not is_valid_uuid4(_uuid):
-            raise ValueError('Invalid `_uuid`.')
+    def __init__(self, uuid, timestamp, content=None, tags=None):
+        if not is_valid_uuid4(uuid):
+            raise ValueError('Invalid `uuid`.')
         if not isinstance(timestamp, int):
             try:
                 timestamp = int(timestamp)
@@ -28,18 +28,19 @@ class Note(object):
             raise TypeError('`content` should be an instance of `%s`' % Content)
         if tags and not isinstance(tags, Tags):
             raise TypeError('`tags` should be an instance of `%s`' % Tags)
-        self._uuid = _uuid
+        self.uuid = uuid
         self.create_time = timestamp
         self.update_time = timestamp
         self._content = content
         self.tags = tags
 
     def __str__(self):
-        formatted_time = cls_dt.fromtimestamp(self.create_time).strftime('%Y-%m-%d %H:%M:%S')
+        ctime = cls_dt.fromtimestamp(self.create_time).strftime('%Y-%m-%d %H:%M:%S')
+        utime = cls_dt.fromtimestamp(self.update_time).strftime('%Y-%m-%d %H:%M:%S')
         val = str(self.content)
         str_content = ('%s...' % val[:29]) if len(val) > 32 else val
-        return '<%s object, created: %s, content: %s>' % (
-            self.__class__.__name__, formatted_time, str_content
+        return '<%s object, created: %s, updated: %s, content: %s>' % (
+            self.__class__.__name__, ctime, utime, str_content
         )
 
     @property
@@ -57,10 +58,10 @@ class Note(object):
 
     @classmethod
     def create(cls, content=None, tags=None):
-        _uuid = uuid4()
+        uuid = uuid4()
         create_time = int(cls_dt.now().timestamp())
         content = Content(content)
-        return Note(_uuid, create_time, content, Tags(tags))
+        return Note(uuid, create_time, content, Tags(tags))
 
     @classmethod
     def from_dict(cls, x):
@@ -69,15 +70,26 @@ class Note(object):
             msg = ', '.join([cls.required_fields[i] for i, v in enumerate(checked) if not v])
             raise ValueError('Missing required field: %s' % msg)
 
-        obj = cls.create(x['content'], x['tags'])
-        obj._uuid = x['_uuid']
-        obj.create_time = x['create_time']
-        obj.update_time = x['update_time']
+        raw_tags = x['tags']
+        if isinstance(raw_tags, str):
+            tags = Tags.from_string_content(raw_tags)
+        else:
+            tags = Tags(raw_tags)
+        obj = cls.create(x['content'], tags)
+
+        obj.uuid = x['uuid']
+        for attr_name in ['create_time', 'update_time']:
+            if isinstance(x[attr_name], cls_dt):
+                setattr(obj, attr_name, int(x[attr_name].timestamp()))
+            elif isinstance(x[attr_name], int):
+                setattr(obj, attr_name, x[attr_name])
+            else:
+                raise TypeError('Invalid type of %s' % attr_name)
         return obj
 
     def to_dict(self):
         return {
-            '_uuid': self._uuid.hex,
+            'uuid': self.uuid.hex,
             'create_time': self.create_time,
             'update_time': self.update_time,
             'content': self.content.to_format(str),

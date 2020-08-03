@@ -38,7 +38,7 @@ class SQLiteStorer(BaseStorer):
         with self.db.atomic() as transaction:
             try:
                 pw_note = Note(
-                    uuid=str(note._uuid),
+                    uuid=str(note.uuid),
                     create_time=note.create_time,
                     update_time=note.update_time,
                     content=note.content.to_format(str),
