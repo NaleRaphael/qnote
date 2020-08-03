@@ -4,6 +4,8 @@ from argparse import SUPPRESS as ARG_SUPPRESS
 
 from qnote.cli.parser import CustomArgumentParser, PassableHelpAction
 from qnote.config import AppConfig
+from qnote.internal.exceptions import StorageCheckException
+from qnote.storage import get_storer
 import qnote.commands as cmds
 
 
@@ -70,9 +72,26 @@ class CommandEntry(cmds.Command):
 class Application(object):
     def __init__(self):
         self.initialize()
+        self.initialize_storage()
 
     def initialize(self):
         self.config = AppConfig.load()
+
+    def initialize_storage(self):
+        # default notebook: "[DEFAULT]" and "[TRASH]" should be initialized
+        nb_names = [
+            self.config.notebook.name_default,
+            self.config.notebook.name_trash,
+        ]
+        storer = get_storer(self.config)
+
+        for name in nb_names:
+            if not storer.does_notebook_exist(name):
+                msg = (
+                    'Storage is not initialized properly, please report '
+                    'this error to developers: DEFAULT_NOTEBOOK_CREATION_FAULURE'
+                )
+                raise StorageCheckException(msg)
 
     def run(self):
         entry = CommandEntry('qnote')

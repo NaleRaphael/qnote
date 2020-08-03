@@ -43,7 +43,7 @@ class BaseModel(pw.Model):
 
 class Tag(BaseModel):
     id = pw.AutoField()
-    name = pw.CharField()
+    name = pw.CharField(unique=True)
 
 
 class Note(BaseModel):
@@ -64,7 +64,7 @@ class NoteToTag(BaseModel):
 
 class Notebook(BaseModel):
     id = pw.AutoField()
-    name = pw.CharField()
+    name = pw.CharField(unique=True)
     create_time = pw.TimestampField()
     update_time = pw.TimestampField()
 
