@@ -86,7 +86,7 @@ class Application(object):
         storer = get_storer(self.config)
 
         for name in nb_names:
-            if not storer.does_notebook_exist(name):
+            if not storer.check_notebook_exist(name):
                 msg = (
                     'Storage is not initialized properly, please report '
                     'this error to developers: DEFAULT_NOTEBOOK_CREATION_FAULURE'

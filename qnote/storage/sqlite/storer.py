@@ -85,7 +85,7 @@ class SQLiteStorer(BaseStorer):
                 transaction.rollback()
                 raise StorageExecutionException(str(ex)) from ex
 
-    def does_notebook_exist(self, nb_name):
+    def check_notebook_exist(self, nb_name):
         """
         Parameters
         ----------
@@ -136,9 +136,38 @@ class SQLiteStorer(BaseStorer):
         notebook : qnote.objects.Notebook
         """
         query = self._query_get_notebook(nb_name)
-        assert query.exists()
+        if not query.exists():
+            raise StorageCheckException('Notebook `%s` does not exist' % nb_name)
 
         result = list(query.namedtuples())
         assert len(result) == 1
 
         return qo.Notebook.from_dict(result[0]._asdict())
+
+    def get_notes_from_notebook(self, nb_name, n_limit=None, order='descending'):
+        order_converter = {
+            'ascending': lambda x: x,
+            'descending': lambda x: -x,
+        }
+
+        if order.lower() not in order_converter:
+            msg = '`order` should be one of %s' % list(order_converter.keys())
+            raise ValueError(msg)
+
+        query = (
+            Note
+            .select()
+            .join(NoteToNotebook)
+            .join(Notebook)
+            .where(Notebook.name == nb_name)
+            .order_by(order_converter[order](Note.update_time))
+            .limit(n_limit)
+            .select(Note, pw.fn.group_concat(Tag.name).alias('tags'))
+            .join(NoteToTag, on=(Note.id == NoteToTag.note_id))
+            .join(Tag)
+            .group_by(Note.uuid)
+            .namedtuples()
+        )
+        result = [v for v in query]
+        notes = [qo.Note.from_dict(v._asdict()) for v in query]
+        return notes

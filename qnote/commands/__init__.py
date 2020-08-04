@@ -3,6 +3,7 @@ from .add import *
 from .help import *
 from .list import *
 from .notebook import *
+from .status import *
 
 
 __all__ = []
@@ -11,5 +12,6 @@ __all__.extend(add.__all__)
 __all__.extend(help.__all__)
 __all__.extend(list.__all__)
 __all__.extend(notebook.__all__)
+__all__.extend(status.__all__)
 
-del base_command, add, help, list, notebook
+del base_command, add, help, list, notebook, status

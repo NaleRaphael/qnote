@@ -35,7 +35,7 @@ class Notebook(object):
         return cls(create_time, name)
 
     @classmethod
-    def from_dict(cls, x):
+    def from_dict(cls, x, load_notes=False):
         checked = [field in x for field in cls.required_fields]
         if not all(checked):
             msg = ', '.join([cls.required_fields[i] for i, v in enumerate(checked) if not v])
@@ -44,7 +44,18 @@ class Notebook(object):
         obj = cls.create(x['name'])
         obj.create_time = x['create_time']
         obj.update_time = x['update_time']
+
+        if load_notes:
+            obj.add_notes([Note.from_dict(v) for v in x['notes']])
         return obj
+
+    def to_dict(self):
+        return {
+            'name': self.name,
+            'create_time': self.create_time,
+            'update_time': self.update_time,
+            'notes': [v.to_dict() for v in self.notes],
+        }
 
     def add_note(self, note):
         if not isinstance(note, Note):

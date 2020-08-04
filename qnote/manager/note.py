@@ -16,7 +16,7 @@ class NoteManager(object):
         nb_name = HEAD.get()
         storer = get_storer(self.config)
 
-        if not storer.does_notebook_exist(nb_name):
+        if not storer.check_notebook_exist(nb_name):
             msg = 'Notebook `%s` does not exist' % nb_name
             raise StorageCheckException(msg)
 
