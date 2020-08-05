@@ -12,7 +12,7 @@ class NoteManager(object):
     def __init__(self, config):
         self.config = config
 
-    def create_note(self, raw_content, raw_tags):
+    def create_note(self, raw_title, raw_content, raw_tags):
         nb_name = HEAD.get()
         storer = get_storer(self.config)
 
@@ -24,6 +24,6 @@ class NoteManager(object):
             note = NoteOperator(self.config).create_note()
         else:
             tags = [] if raw_tags is None else Tags.from_string_content(raw_tags)
-            note = Note.create(raw_content, tags)
+            note = Note.create(raw_title, raw_content, tags)
 
         storer.create_note(note, nb_name)

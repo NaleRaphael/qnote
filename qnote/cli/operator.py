@@ -70,6 +70,9 @@ class NoteOperator(object):
         regex = re.compile(re.escape(note_template.strip()))
         content = regex.sub('', content).strip()
 
+        # - parse title (the first line starts with "#*")
+        title = find_title_from_content(content, self.config.note.max_title_len)
+
         # - auto parsing tags from note content
         tags = Tags()
         if self.config.tag.auto_parse:
@@ -84,6 +87,9 @@ class NoteOperator(object):
                 print('Failed to parse tags automatically...')
                 input('Press any key to continue')
 
+        # - remove leading and trailing spaces again
+        content = content.strip()
+
         try:
             print('Tags: %s' % str(tags))
             continue_edit_tags = query_yes_no(
@@ -94,7 +100,7 @@ class NoteOperator(object):
             sys.exit(1)
 
         if not continue_edit_tags:
-            return Note.create(content, tags)
+            return Note.create(title, content, tags)
 
         # - let user edit tags
         if editor is None and use_default_editor:
@@ -109,7 +115,7 @@ class NoteOperator(object):
                 fn_tmp=self.config.editor.fn_tempfile, init_content=str(tags)
             )
         tags = Tags.from_string_content(raw_tags)
-        return Note.create(content, tags)
+        return Note.create(title, content, tags)
 
     def edit_note(self, uuid):
         # TODO: update `note.update_time`
@@ -145,9 +151,31 @@ def extract_tags_from_content(content):
     all_tags = Tags()
     new_content = content
 
-    matches = re.compile(r'\^{3}\s*(#\w+[,\s]*)+\^{3}\n*').finditer(content)
+    # NOTE: Here we don't make this pattern to recognize leading spaces.
+    #   This makes users able to avoid auto-parsing those lines
+    #   (Just like the way how `git` handles comment lines)
+    matches = re.compile(r'\^{3}\s*(#\w+[,\s]*)+\^{3}[\s\n]*').finditer(content)
     for line in matches:
         all_tags += Tags.from_string_content(line.group())
         new_content = new_content.replace(line.group(), '')
 
     return all_tags, new_content
+
+
+def find_title_from_content(content, max_title_len):
+    title = ''
+    content += '\n'
+    idx_title_end = content.find('\n')
+
+    if idx_title_end == -1:
+        return title
+
+    # find the last space to avoid breaking words
+    if idx_title_end > max_title_len:
+        idx_last_space = content[:idx_title_end].rfind(' ')
+        # in case the first line is a string without spaces
+        if idx_last_space != -1:
+            idx_title_end = idx_last_space
+
+    title = content[:idx_title_end].strip()
+    return title

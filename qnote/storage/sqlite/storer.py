@@ -65,6 +65,7 @@ class SQLiteStorer(BaseStorer):
                     uuid=str(note.uuid),
                     create_time=note.create_time,
                     update_time=note.update_time,
+                    title=note.title,
                     content=note.content.to_format(str),
                 )
                 pw_note.save()

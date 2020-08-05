@@ -14,9 +14,9 @@ def is_valid_uuid4(x):
 
 
 class Note(object):
-    required_fields = ['uuid', 'create_time', 'update_time', 'content', 'tags']
+    required_fields = ['uuid', 'create_time', 'update_time', 'title', 'content', 'tags']
 
-    def __init__(self, uuid, timestamp, content=None, tags=None):
+    def __init__(self, uuid, timestamp, title=None, content=None, tags=None):
         if not is_valid_uuid4(uuid):
             raise ValueError('Invalid `uuid`.')
         if not isinstance(timestamp, int):
@@ -24,23 +24,21 @@ class Note(object):
                 timestamp = int(timestamp)
             except ValueError as ex:
                 raise ValueError('Invalid timestamp') from ex
-        if content and not isinstance(content, Content):
-            raise TypeError('`content` should be an instance of `%s`' % Content)
         if tags and not isinstance(tags, Tags):
             raise TypeError('`tags` should be an instance of `%s`' % Tags)
         self.uuid = uuid
         self.create_time = timestamp
         self.update_time = timestamp
-        self._content = content
-        self.tags = tags
+        self.title = '' if title is None else title
+        self._content = Content(content)
+        self.tags = Tags(tags)
 
     def __str__(self):
         ctime = cls_dt.fromtimestamp(self.create_time).strftime('%Y-%m-%d %H:%M:%S')
         utime = cls_dt.fromtimestamp(self.update_time).strftime('%Y-%m-%d %H:%M:%S')
-        val = str(self.content)
-        str_content = ('%s...' % val[:29]) if len(val) > 32 else val
-        return '<%s object, created: %s, updated: %s, content: %s>' % (
-            self.__class__.__name__, ctime, utime, str_content
+        str_title = ('%s...' % self.title[:29]) if len(self.title) > 32 else self.title
+        return '<%s object, created: %s, updated: %s, title: %s>' % (
+            self.__class__.__name__, ctime, utime, str_title
         )
 
     @property
@@ -57,11 +55,10 @@ class Note(object):
         self._content = value
 
     @classmethod
-    def create(cls, content=None, tags=None):
+    def create(cls, title=None, content=None, tags=None):
         uuid = uuid4()
         create_time = int(cls_dt.now().timestamp())
-        content = Content(content)
-        return Note(uuid, create_time, content, Tags(tags))
+        return Note(uuid, create_time, title, content, Tags(tags))
 
     @classmethod
     def from_dict(cls, x):
@@ -75,7 +72,7 @@ class Note(object):
             tags = Tags.from_string_content(raw_tags)
         else:
             tags = Tags(raw_tags)
-        obj = cls.create(x['content'], tags)
+        obj = cls.create(x['title'], x['content'], tags)
 
         obj.uuid = x['uuid']
         for attr_name in ['create_time', 'update_time']:
@@ -92,6 +89,7 @@ class Note(object):
             'uuid': self.uuid.hex,
             'create_time': self.create_time,
             'update_time': self.update_time,
+            'title': self.title,
             'content': self.content.to_format(str),
             'tags': str(self.tags),
         }

@@ -73,6 +73,9 @@ class AppConfig(ConfigBase):
         self.storage = StorageConfig(
             **kwargs.pop(StorageConfig.name, {})
         )
+        self.note = NoteConfig(
+            **kwargs.pop(NoteConfig.name, {})
+        )
         self.tag = TagConfig(
             **kwargs.pop(TagConfig.name, {})
         )
@@ -107,6 +110,7 @@ class AppConfig(ConfigBase):
         return {
             self.editor.name: self.editor.to_dict(),
             self.storage.name: self.storage.to_dict(),
+            self.note.name: self.note.to_dict(),
             self.tag.name: self.tag.to_dict(),
             self.notebook.name: self.notebook.to_dict(),
         }
@@ -145,6 +149,20 @@ class StorageConfig(ConfigBase):
             raise ValueError('Type of storage "%s" is not supported, possible'
                 ' choices: %s' % (self.type, StorageDefaults.valid_types))
         self.dir_root = kwargs.pop('dir_root', StorageDefaults.dir_root)
+        self._check_remaining_kwargs(**kwargs)
+
+
+class NoteDefaults(Defaults):
+    max_title_len = 256
+
+
+class NoteConfig(ConfigBase):
+    name = 'note'
+    keys = []
+
+    def __init__(self, **kwargs):
+        super(NoteConfig, self).__init__()
+        self.max_title_len = NoteDefaults.max_title_len
         self._check_remaining_kwargs(**kwargs)
 
 

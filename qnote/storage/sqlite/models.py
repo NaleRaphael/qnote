@@ -49,6 +49,7 @@ class Tag(BaseModel):
 class Note(BaseModel):
     id = pw.AutoField()
     uuid = pw.UUIDField()
+    title = pw.CharField(max_length=256)
     create_time = pw.TimestampField()
     update_time = pw.TimestampField()
     content = pw.TextField()

@@ -13,7 +13,7 @@ class AddCommand(Command):
     """Add a new note."""
 
     _usage = """
-    <prog> [-c | --content <content>] [-t | --tags <tags>]"""
+    <prog> [-t | --title <title>] [-c | --content <content>] [-t | --tags <tags>]"""
 
     def __init__(self, *args, **kwargs):
         super(AddCommand, self).__init__(*args, **kwargs)
@@ -21,19 +21,27 @@ class AddCommand(Command):
 
     def run(self, parsed_args, config):
         kwargs, _ = parsed_args
-        raw_content, raw_tags = kwargs['content'], kwargs['tags']
-        NoteManager(config).create_note(raw_content, raw_tags)
+        NoteManager(config).create_note(
+            kwargs['title'],
+            kwargs['content'],
+            kwargs['tags']
+        )
 
     def prepare_parser(self):
         parser = CustomArgumentParser(
             prog=self.name, usage=self.usage, add_help=False,
         )
         parser.add_argument(
+            '-t', '--title', dest='title', metavar='<title>',
+            help=('Title of note. If not given, title will be the first line '
+            'of content.')
+        )
+        parser.add_argument(
             '-c', '--content', dest='content', metavar='<content>',
             help='Content of note.'
         )
         parser.add_argument(
-            '-t', '--tags', dest='tags', metavar='<tags>',
+            '-g', '--tags', dest='tags', metavar='<tags>',
             help=(
                 'Tags of note, should be separated by commas if multiple'
                 'tags is given. '
