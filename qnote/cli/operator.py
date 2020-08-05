@@ -68,15 +68,21 @@ class NoteOperator(object):
 
         # - remove template string
         regex = re.compile(re.escape(note_template.strip()))
-        content = regex.sub('', content)
+        content = regex.sub('', content).strip()
 
         # - auto parsing tags from note content
+        tags = Tags()
         if self.config.tag.auto_parse:
-            tags = Tags.from_string_content(content)
-            if self.config.tag.auto_remove_from_content:
-                content = remove_tags_from_string(content, tags)
-        else:
-            tags = []
+            # Extract tags only from those lines enclosed by `^^^`
+            # e.g. ^^^#tag1, #tag2^^^
+            # So that these line can be removed totally.
+            try:
+                tags, new_content = extract_tags_from_content(content)
+                if self.config.tag.auto_remove_from_content:
+                    content = new_content
+            except Exception as ex:
+                print('Failed to parse tags automatically...')
+                input('Press any key to continue')
 
         try:
             print('Tags: %s' % str(tags))
@@ -106,6 +112,7 @@ class NoteOperator(object):
         return Note.create(content, tags)
 
     def edit_note(self, uuid):
+        # TODO: update `note.update_time`
         raise NotImplementedError
 
     def search_note(self):
@@ -134,9 +141,13 @@ def open_default_editor(fn_tmp='', init_content=''):
     return retval['content']
 
 
-def remove_tags_from_string(string, tags):
-    result = string
-    for tag in tags:
-        regex = re.compile(re.escape(str(tag)))
-        result = regex.sub('', result)
-    return result
+def extract_tags_from_content(content):
+    all_tags = Tags()
+    new_content = content
+
+    matches = re.compile(r'\^{3}\s*(#\w+[,\s]*)+\^{3}\n*').finditer(content)
+    for line in matches:
+        all_tags += Tags.from_string_content(line.group())
+        new_content = new_content.replace(line.group(), '')
+
+    return all_tags, new_content
