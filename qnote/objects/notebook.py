@@ -16,6 +16,8 @@ class Notebook(object):
             notes = []
         self.name = name
         self.notes = notes
+        self._create_time = None
+        self._update_time = None
         self.create_time = timestamp
         self.update_time = timestamp
 
@@ -28,6 +30,32 @@ class Notebook(object):
         return '<%s object, created: %s, updated: %s, num_notes: %s>' % (
             self.__class__.__name__, ctime, utime, len(self.notes)
         )
+
+    @property
+    def create_time(self):
+        return self._create_time
+
+    @create_time.setter
+    def create_time(self, value):
+        if isinstance(value, cls_dt):
+            self._create_time = int(value.timestamp())
+        elif isinstance(value, (int, float)):
+            self._create_time = int(value)
+        else:
+            raise TypeError('Unknow type for `create_time`: %s' % type(value))
+
+    @property
+    def update_time(self):
+        return self._update_time
+
+    @update_time.setter
+    def update_time(self, value):
+        if isinstance(value, cls_dt):
+            self._update_time = int(value.timestamp())
+        elif isinstance(value, (int, float)):
+            self._update_time = int(value)
+        else:
+            raise TypeError('Unknow type for `update_time`: %s' % type(value))
 
     @classmethod
     def create(cls, name):
