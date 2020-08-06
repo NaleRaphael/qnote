@@ -47,8 +47,12 @@ class SQLiteStorer(BaseStorer):
             self.config.notebook.name_trash
         ]
         for name in nb_names:
-            notebook = qo.Notebook.create(name)
-            self.create_notebook(notebook, exist_ok=True)
+            # Explicitly checking by this query instead of calling
+            # `self.create_notebook(name, exist_ok=True)` to avoid
+            # confusion and unnecessary overhead of function call.
+            if not self.check_notebook_exist(name):
+                notebook = qo.Notebook.create(name)
+                self.create_notebook(notebook)
 
     def _query_get_notebook(self, nb_name):
         """Query of `get_notebook()` operation."""
