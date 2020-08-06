@@ -114,13 +114,13 @@ class SQLiteStorer(BaseStorer):
         """
         with self.db.atomic() as transaction:
             try:
-                pw_notebook, exists = Notebook.get_or_create(
+                pw_notebook, not_existed = Notebook.get_or_create(
                     name=notebook.name, defaults={
                         'create_time': notebook.create_time,
                         'update_time': notebook.update_time
                     }
                 )
-                if not exist_ok and exists:
+                if not exist_ok and not not_existed:
                     msg = 'Notebook `%s` already exists.' % notebook.name
                     raise StorageCheckException(msg)
             except StorageCheckException:
