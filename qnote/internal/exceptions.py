@@ -11,6 +11,7 @@ __all__ = [
     'StorageCheckException',
     'StorageExecutionException',
     'StorageRuntimeError',
+    'SafeExitException',
 ]
 
 
@@ -44,4 +45,10 @@ class StorageRuntimeError(RuntimeError):
     """Just like the meaning of built-in `RuntimeError`, those exceptions
     which got detected but not able to be classified to other categories
     should be raised in this type."""
+    pass
+
+
+class SafeExitException(Exception):
+    """Exceptions indicating application should be terminated safely instead
+    of showing traceback."""
     pass

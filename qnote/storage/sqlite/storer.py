@@ -129,6 +129,10 @@ class SQLiteStorer(BaseStorer):
                 transaction.rollback()
                 raise StorageExecutionException(str(ex)) from ex
 
+    def create_notebook_by_name(self, nb_name):
+        notebook = qo.Notebook.create(nb_name)
+        self.create_notebook(notebook, exist_ok=False)
+
     def get_notebook(self, nb_name):
         """
         Parameters
@@ -148,6 +152,17 @@ class SQLiteStorer(BaseStorer):
         assert len(result) == 1
 
         return qo.Notebook.from_dict(result[0]._asdict())
+
+    def get_all_notebooks(self):
+        query = Notebook.select()
+        result = list(query.namedtuples())
+        return [qo.Notebook.from_dict(v._asdict()) for v in result]
+
+    def get_notebook_with_notes(self, nb_name, n_limit=None, order='descending'):
+        notebook = self.get_notebook(nb_name)
+        notes = self.get_notes_from_notebook(nb_name, n_limit=n_limit, order=order)
+        notebook.add_notes(notes)
+        return notebook
 
     def get_notes_from_notebook(self, nb_name, n_limit=None, order='descending'):
         order_converter = {
@@ -176,3 +191,71 @@ class SQLiteStorer(BaseStorer):
         result = [v for v in query]
         notes = [qo.Note.from_dict(v._asdict()) for v in query]
         return notes
+
+    def rename_notebook(self, old_name, new_name):
+        with self.db.atomic() as transaction:
+            try:
+                query = (
+                    Notebook
+                    .update({Notebook.name: new_name})
+                    .where(Notebook.name == old_name)
+                )
+                query.execute()
+            except Exception as ex:
+                transaction.rollback()
+                raise StorageExecutionException(str(ex)) from ex
+
+    def delete_notebook(self, nb_name):
+        query = (
+            Note
+            .select()
+            .join(NoteToNotebook)
+            .join(Notebook)
+            .where(Notebook.name == nb_name)
+        )
+
+        result = list(query)
+        if len(result) != 0:
+            self._delete_notebook_containing_notes(nb_name)
+        else:
+            self._delete_empty_notebook(nb_name)
+
+    def _delete_notebook_containing_notes(self, nb_name):
+        with self.db.atomic() as transaction:
+            try:
+                query_notes = (
+                    Note
+                    .select()
+                    .join(NoteToNotebook)
+                    .join(Notebook)
+                    .where(Notebook.name == nb_name)
+                )
+
+                # NOTE: We have to execute this query before deleting rows in
+                # `NoteToNotebook`. Otherwise, result of this query will become
+                # empty after those relations in `NoteToNotebook` are deleted.
+                # And that will make it failed to delete notes.
+                note_ids = [v.id for v in query_notes]
+
+                # Delete relations
+                NoteToTag.delete().where(
+                    NoteToTag.note_id.in_(query_notes)
+                ).execute()
+                NoteToNotebook.delete().where(
+                    NoteToNotebook.note_id.in_(query_notes)
+                ).execute()
+
+                # Delete notes and notebook
+                Note.delete().where(Note.id.in_(note_ids)).execute()
+                Notebook.delete().where(Notebook.name == nb_name).execute()
+            except Exception as ex:
+                transaction.rollback()
+                raise StorageExecutionException(str(ex)) from ex
+
+    def _delete_empty_notebook(self, nb_name):
+        with self.db.atomic() as transaction:
+            try:
+                Notebook.delete().where(Notebook.name == nb_name).execute()
+            except Exception as ex:
+                transaction.rollback()
+                raise StorageExecutionException(str(ex)) from ex

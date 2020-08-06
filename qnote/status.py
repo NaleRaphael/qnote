@@ -33,4 +33,4 @@ class HEAD(object):
     def set(cls, name):
         config = AppConfig.load()
         fn_head = config.notebook.fn_head
-        self._write(fn_head, name)
+        cls._write(fn_head, name)
