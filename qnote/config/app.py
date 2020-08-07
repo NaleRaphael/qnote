@@ -67,6 +67,9 @@ class AppConfig(ConfigBase):
         super(AppConfig, self).__init__()
         if kwargs is None:
             kwargs = {}     # first initialization
+        self.display = DisplayConfig(
+            **kwargs.pop(DisplayConfig.name, {})
+        )
         self.editor = EditorConfig(
             **kwargs.pop(EditorConfig.name, {})
         )
@@ -108,12 +111,29 @@ class AppConfig(ConfigBase):
 
     def to_dict(self):
         return {
+            self.display.name: self.display.to_dict(),
             self.editor.name: self.editor.to_dict(),
             self.storage.name: self.storage.to_dict(),
             self.note.name: self.note.to_dict(),
             self.tag.name: self.tag.to_dict(),
             self.notebook.name: self.notebook.to_dict(),
         }
+
+
+class DisplayDefaults(Defaults):
+    width = 80
+    max_lines = 5
+
+
+class DisplayConfig(ConfigBase):
+    name = 'display'
+    keys = ['width', 'max_lines']
+
+    def __init__(self, **kwargs):
+        super(DisplayConfig, self).__init__()
+        self.width = kwargs.pop('width', DisplayDefaults.width)
+        self.max_lines = kwargs.pop('max_lines', DisplayDefaults.max_lines)
+        self._check_remaining_kwargs(**kwargs)
 
 
 class EditorDefaults(Defaults):

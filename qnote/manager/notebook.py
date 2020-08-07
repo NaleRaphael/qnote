@@ -1,3 +1,5 @@
+import textwrap as tw
+
 from qnote.internal.exceptions import (
     StorageCheckException,
     StorageRuntimeError,
@@ -148,3 +150,54 @@ class NotebookManager(object):
                 'it was opened.' % (head_default, notebook.name)
             )
             print(msg)
+
+    def show_all_notes(self, show_date=False, show_uuid=False):
+        # TODO: functionality of this method is similar to `self.show_status`,
+        # maybe we can rewrite this later?
+        nb_name = HEAD.get()
+
+        storer = get_storer(self.config)
+        if not storer.check_notebook_exist(nb_name):
+            msg = (
+                'Current HEAD is pointing a notebook which does not exist, '
+                'there might be something wrong with HEAD pointer or database.'
+            )
+            raise SafeExitException(msg)
+
+        notes = storer.get_notes_from_notebook(nb_name, n_limit=None)
+        msg = self._build_notes_list_msg(notes, show_date=show_date, show_uuid=show_uuid)
+        print(msg)
+
+    def _build_notes_list_msg(self, notes, show_date=False, show_uuid=False):
+        from datetime import datetime as dt
+
+        d_width = self.config.display.width
+        max_lines = self.config.display.max_lines   # TODO: limit the lines of content
+        indent_prefix = '    '
+        fmt_time = '%Y-%m-%d %H:%M:%S'
+
+        text_shortener = lambda text: tw.shorten(text, width=d_width, placeholder='...')
+        fmt_uuid = lambda x: 'UUID: %s' % x.uuid
+        fmt_title = lambda x: 'Title: %s' % text_shortener(x.title)
+        fmt_tags = lambda x: 'Tags: %s' % text_shortener(str(x.tags))
+        fmt_content = lambda x: 'Content:\n%s' % tw.indent(
+            tw.shorten(
+                x.content.to_format(str), width=d_width-4, placeholder='...',
+            ),
+            prefix=indent_prefix,
+        )
+        fmt_ctime = lambda x: 'Created at: %s' % dt.fromtimestamp(x.create_time).strftime(fmt_time)
+        fmt_utime = lambda x: 'Updated at: %s' % dt.fromtimestamp(x.update_time).strftime(fmt_time)
+
+        formatters = [fmt_title, fmt_tags]
+        if show_date:
+            formatters.extend([fmt_ctime, fmt_utime])
+        if show_uuid:
+            formatters = [fmt_uuid, *formatters]
+        formatters.append(fmt_content)
+
+        msg = ''
+        for note in notes:
+            temp = '\n'.join([fmt(note) for fmt in formatters])
+            msg += '\n%s\n' % temp
+        return msg
