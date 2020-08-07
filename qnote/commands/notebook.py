@@ -93,9 +93,11 @@ class NotebookCommand(Command):
         NotebookManager(config).open_notebook(name)
 
     def _run_list(self, parsed_kwargs, config):
-        date = parsed_kwargs['date']
+        show_date = parsed_kwargs['date']
         show_all = parsed_kwargs['all']
-        NotebookManager(config).list_all_notebooks(date=date, show_all=show_all)
+        NotebookManager(config).list_all_notebooks(
+            show_date=show_date, show_all=show_all
+        )
 
     def _run_search(self, parsed_kwargs, config):
         raise NotImplementedError

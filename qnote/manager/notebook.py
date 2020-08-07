@@ -65,7 +65,7 @@ class NotebookManager(object):
 
         HEAD.set(name)
 
-    def list_all_notebooks(self, date=None, show_all=False):
+    def list_all_notebooks(self, show_date=None, show_all=False):
         # TODO: mark up opening notebook (HEAD)
         storer = get_storer(self.config)
         notebooks = storer.get_all_notebooks()
@@ -77,14 +77,20 @@ class NotebookManager(object):
             ]
             notebooks = [v for v in notebooks if v.name not in excluding_name]
 
-        if date:
-            fmt = '%s, created: %s, updated: %s'
-            getter = lambda x: (x.name, x.create_time, x.update_time)
-        else:
-            fmt = '%s'
-            getter = lambda x: x.name
+        if show_date:
+            from datetime import datetime as dt
 
-        msg = '\n'.join([fmt % getter(v) for v in notebooks])
+            fmt_time = '%Y-%m-%d %H:%M:%S'
+            time_formatter = lambda x: dt.fromtimestamp(x).strftime(fmt_time)
+            formatter = lambda x: '%10s, created: %s, updated: %s' % (
+                x.name,
+                time_formatter(x.create_time),
+                time_formatter(x.update_time),
+            )
+        else:
+            formatter = lambda x: '%s' % x.name
+
+        msg = '\n'.join([formatter(v) for v in notebooks])
         print(msg)
 
     def rename_notebook(self, old_name, new_name):
