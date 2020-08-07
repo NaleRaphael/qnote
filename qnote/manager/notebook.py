@@ -23,8 +23,8 @@ class NotebookManager(object):
         storer = get_storer(self.config)
         try:
             notebook = storer.get_notebook(nb_name)
-        except StorageCheckException:
-            raise
+        except StorageCheckException as ex_check:
+            raise SafeExitException(str(ex_check)) from ex_check
         except Exception as ex:
             raise StorageRuntimeError(str(ex)) from ex
 

@@ -1,6 +1,7 @@
 from argparse import SUPPRESS as ARG_SUPPRESS
 
 from qnote.cli.parser import CustomArgumentParser
+from qnote.internal.exceptions import SafeExitException
 from qnote.manager import NotebookManager
 
 from .base_command import Command
@@ -24,8 +25,10 @@ class StatusCommand(Command):
         kwargs, _ = parsed_args
         name = kwargs.get('name', None)
 
-        notebook_manager = NotebookManager(config)
-        notebook_manager.show_status(name)
+        try:
+            NotebookManager(config).show_status(name)
+        except SafeExitException as ex:
+            print(ex)
 
     def prepare_parser(self):
         parser = CustomArgumentParser(
