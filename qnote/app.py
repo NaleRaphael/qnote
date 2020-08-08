@@ -18,6 +18,7 @@ subcommands = {
     'list': cmds.ListCommand('list'),
     'notebook': cmds.NotebookCommand('notebook'),
     'status': cmds.StatusCommand('status'),
+    'select': cmds.SelectCommand('select'),
 }
 
 

@@ -7,7 +7,7 @@ from qnote.internal.exceptions import (
     SafeExitException,
 )
 from qnote.storage import get_storer
-from qnote.status import HEAD
+from qnote.status import HEAD, CachedNoteUUIDs
 
 
 __all__ = ['NotebookManager']
@@ -68,7 +68,7 @@ class NotebookManager(object):
 
         HEAD.set(name)
 
-    def list_all_notebooks(self, show_date=None, show_all=False):
+    def list_all_notebooks(self, show_date=False, show_all=False):
         # TODO: mark up opening notebook (HEAD)
         storer = get_storer(self.config)
         notebooks = storer.get_all_notebooks()
@@ -170,3 +170,32 @@ class NotebookManager(object):
         NotebookOperator(self.config).show_notes(
             notes, show_date=show_date, show_uuid=show_uuid
         )
+
+    def select_notes(self, multiple=False, show_date=False, show_uuid=False):
+        nb_name = HEAD.get()
+
+        storer = get_storer(self.config)
+        if not storer.check_notebook_exist(nb_name):
+            msg = (
+                'Trying to get all notes from currently opened notebook: %s '
+                'but it does not exist. There might be something wrong with '
+                'HEAD pointer or database.'
+            )
+            raise SafeExitException(msg)
+
+        notes = storer.get_notes_from_notebook(nb_name, n_limit=None)
+
+        selected_notes = NotebookOperator(self.config).select_notes(
+            notes, multiple=multiple, show_date=show_date, show_uuid=show_uuid
+        )
+
+        selected_uuids = [v.uuid for v in selected_notes]
+        is_plural = len(selected_uuids) > 1
+        CachedNoteUUIDs.set(selected_uuids)
+
+        msg = '%s note%s ha%s been selected.' % (
+            len(selected_uuids),
+            's' if is_plural else '',
+            've' if is_plural else 's'
+        )
+        print(msg)

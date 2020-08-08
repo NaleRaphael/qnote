@@ -52,6 +52,7 @@ class ListBoxRender(_ConsoleRender):
     def __init__(self, event_generator=None, theme=None, *args, **kwargs):
         self.render_config = kwargs.pop('render_config', {})
         self._printed_lines = 0
+        self.message_handler = self.render_config.pop('message_handler', None)
         super(ListBoxRender, self).__init__(*args, **kwargs)
 
     def render(self, question, answers=None):
@@ -100,6 +101,9 @@ class ListBoxRender(_ConsoleRender):
 
     def _print_options(self, render):
         for message, symbol, color in render.get_options():
+            if self.message_handler is not None:
+                message = self.message_handler(message)
+
             if hasattr(message, 'decode'):  # python 2
                 message = message.decode('utf-8')
             self._count_lines(message)      # count lines to be erased

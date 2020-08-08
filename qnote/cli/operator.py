@@ -10,7 +10,8 @@ from qnote.internal.exceptions import (
 )
 from qnote.utils import query_yes_no, NoteFormatter
 from qnote.vendor.inquirer import (
-    ConsoleRender, DefaultEditor, DefaultEditorQuestion, DefaultTheme
+    ConsoleRender, DefaultEditorQuestion, DefaultTheme,
+    ListBoxRender, ListBoxQuestion,
 )
 from qnote.vendor.inquirer import prompt as inquirer_prompt
 
@@ -166,6 +167,38 @@ class NotebookOperator(object):
             pydoc.pager(output)
         else:
             print(output)
+
+    def select_notes(self, notes, multiple=False, show_date=False, show_uuid=False):
+        """Interactive mode for selecting note from a list."""
+        tw_config = {
+            'witdh': self.config.display.width,
+            'max_lines': self.config.display.max_lines,
+        }
+        formatter = NoteFormatter(
+            self.config, tw_config=tw_config, show_date=show_date, show_uuid=show_uuid
+        )
+
+        # TODO: if `multiple` is True, use `CheckBoxQuestion` instead.
+        questions = [
+            ListBoxQuestion(
+                'selected',
+                message='List of notes',
+                choices=[(i, v) for i, v in enumerate(notes)]
+            )
+        ]
+
+        def message_handler(message):
+            # NOTE: `message` is a instance of `TaggedValue`, see also
+            # https://github.com/magmax/python-inquirer/blob/5412d53/inquirer/questions.py#L111-L117
+            return '\n%s\n' % formatter(message.value)
+
+        theme = DefaultTheme()
+        render_config = {'message_handler': message_handler}
+        render = ListBoxRender(theme=theme, render_config=render_config)
+        retval = inquirer_prompt(questions, render=render)
+        result = retval['selected']
+
+        return result if isinstance(result, list) else [result]
 
 
 def open_default_editor(fn_tmp='', init_content=''):

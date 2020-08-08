@@ -58,6 +58,7 @@ class AppDefaults(Defaults):
     dir_home = os.getenv('HOME', osp.expanduser('~'))
     dir_config = osp.join(dir_home, '.qnote')
     fn_config = osp.join(dir_config, 'config.json')
+    fn_cached_note_uuid = osp.join(dir_config, 'CACHED_NOTE_UUID')
 
 
 class AppConfig(ConfigBase):
@@ -85,6 +86,7 @@ class AppConfig(ConfigBase):
         self.notebook = NotebookConfig(
             **kwargs.pop(NotebookConfig.name, {})
         )
+        self.fn_cached_note_uuid = AppDefaults.fn_cached_note_uuid
         self._check_remaining_kwargs(**kwargs)
 
     @classmethod
