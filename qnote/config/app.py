@@ -121,18 +121,45 @@ class AppConfig(ConfigBase):
 
 
 class DisplayDefaults(Defaults):
+    # Configurable settings for `textwrap` module.
     width = 80
     max_lines = 5
+    tabsize = 4
+    replace_whitespace = False
+    drop_whitespace = True
+    placeholder = '...'
+    initial_indent = '    '
+    subsequent_indent = '    '
+
+    # Pager
+    default_pager = 'less'
+    pager = ''
 
 
 class DisplayConfig(ConfigBase):
     name = 'display'
-    keys = ['width', 'max_lines']
+    keys = [
+        'width', 'max_lines', 'tabsize', 'replace_whitespace', 'drop_whitespace',
+        'placeholder', 'initial_indent', 'subsequent_indent', 'pager',
+    ]
 
     def __init__(self, **kwargs):
         super(DisplayConfig, self).__init__()
-        self.width = kwargs.pop('width', DisplayDefaults.width)
-        self.max_lines = kwargs.pop('max_lines', DisplayDefaults.max_lines)
+        for k in self.keys:
+            setattr(self, k, kwargs.pop(k, getattr(DisplayDefaults, k)))
+
+        # Detect pager only when it's not defined yet
+        if self.pager == '':
+            from shutil import which
+            import platform
+
+            if which(DisplayDefaults.default_pager) is not None:
+                self.pager = DisplayDefaults.default_pager
+
+            if self.pager == '' and platform.system() == 'Windows':
+                if which('more') is not None:
+                    self.pager = 'more'     # should be a builtin app on Windows
+
         self._check_remaining_kwargs(**kwargs)
 
 
