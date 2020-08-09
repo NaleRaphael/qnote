@@ -25,9 +25,6 @@ class NoteFormatter(object):
         self.text_wrapper = tw.TextWrapper(**self.tw_config)
 
     def _prepare_subformatter(self, show_date=False, show_uuid=False):
-        d_width = self.app_config.display.width
-        max_lines = self.app_config.display.max_lines
-        indent_prefix = '    '
         fmt_time = '%Y-%m-%d %H:%M:%S'
 
         text_shortener = lambda text: tw.shorten(

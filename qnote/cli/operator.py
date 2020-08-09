@@ -192,13 +192,26 @@ class NotebookOperator(object):
             # https://github.com/magmax/python-inquirer/blob/5412d53/inquirer/questions.py#L111-L117
             return '\n%s\n' % formatter(message.value)
 
+        def choices_searcher(choices, pattern):
+            notes = [v.value for v in choices]
+            contents = [str(v.content) for v in notes]
+            regex = re.compile(re.escape(pattern))
+            idx_matched = [i for i, v in enumerate(contents) if regex.search(v) is not None]
+            return [choices[i] for i in idx_matched]
+
         theme = DefaultTheme()
-        render_config = {'message_handler': message_handler}
+        render_config = {
+            'message_handler': message_handler,
+            'choices_searcher': choices_searcher,
+        }
         render = ListBoxRender(theme=theme, render_config=render_config)
         retval = inquirer_prompt(questions, render=render)
         result = retval['selected']
 
-        return result if isinstance(result, list) else [result]
+        if result is None:
+            return []
+        else:
+            return result if isinstance(result, list) else [result]
 
 
 def open_default_editor(fn_tmp='', init_content=''):

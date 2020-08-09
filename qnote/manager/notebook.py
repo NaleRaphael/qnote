@@ -189,6 +189,9 @@ class NotebookManager(object):
             notes, multiple=multiple, show_date=show_date, show_uuid=show_uuid
         )
 
+        if len(selected_notes) == 0:
+            raise SafeExitException('No results found.')
+
         selected_uuids = [v.uuid for v in selected_notes]
         is_plural = len(selected_uuids) > 1
         CachedNoteUUIDs.set(selected_uuids)

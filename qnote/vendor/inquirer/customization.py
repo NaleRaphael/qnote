@@ -14,6 +14,7 @@ from inquirer.questions import (
     Question,
     List as ListQuestion,
 )
+from inquirer import events
 
 
 __all__ = [
@@ -93,6 +94,25 @@ class ListBoxRender(_ConsoleRender):
             raise errors.UnknownQuestionTypeError()
         return matrix.get(question_type)
 
+    def _event_loop(self, render):
+        need_to_rerender = True
+        try:
+            while True:
+                if need_to_rerender:
+                    self._relocate()
+                    self._print_status_bar(render)
+
+                    self._print_header(render)
+                    self._print_options(render)
+
+                    need_to_rerender = self._process_input(render)
+                    self._force_initial_column()
+                else:
+                    need_to_rerender = self._process_input(render)
+        except errors.EndOfInput as e:
+            self._go_to_end(render)
+            return e.selection
+
     def _count_lines(self, msg):
         self._printed_lines += msg.count('\n') + 1
 
@@ -145,6 +165,22 @@ class ListBoxRender(_ConsoleRender):
         self._force_initial_column()
         self._position = 0
 
+    def _process_input(self, render):
+        try:
+            ev = self._event_gen.next()
+            if isinstance(ev, events.KeyPressed):
+                # Return this to check whether it have to rerender
+                return render.process_input(ev.value)
+        except errors.ValidationError as e:
+            self._previous_error = e.value
+        except errors.EndOfInput as e:
+            try:
+                render.question.validate(e.selection)
+                raise
+            except errors.ValidationError as e:
+                self._previous_error = render.handle_validation_error(e)
+        return True
+
 
 class DefaultEditorQuestion(Question):
     kind = 'default_editor'
@@ -188,7 +224,17 @@ class ListBox(List):
         self.max_options_in_display = render_config.get(
             'n_max_options', MAX_OPTIONS_IN_DISPLAY
         )
+        self.choices_searcher = render_config.get(
+            'choices_searcher', None
+        )
+        self.search_pattern = None
+        self.n_current_choices = self.max_options_in_display
         self.half_options = int((self.max_options_in_display - 1) / 2)
+
+        # NOTE: This should not be initialized to [], because we have to check
+        # the selected choices is valid when `key.Enter` is pressed. See also
+        # `process_input()` for further details.
+        self.filtered_choices = None
         super(ListBox, self).__init__(*args, **kwargs)
 
     @property
@@ -197,16 +243,40 @@ class ListBox(List):
         return len(choices) >= self.max_options_in_display
 
     def get_options(self):
-        choices = self.question.choices or []
-        if self.is_long:
-            cmin = 0
-            cmax = self.max_options_in_display
+        if self.filtered_choices is None:
+            choices = self.question.choices or []
+        else:
+            choices = self.filtered_choices
 
-            if self.half_options < self.current < len(choices) - self.half_options:
-                cmin += self.current - self.half_options
-                cmax += self.current - self.half_options
-            elif self.current >= len(choices) - self.half_options:
-                cmin += len(choices) - self.max_options_in_display
+        # Process with search mode
+        if self.choices_searcher is not None and self.search_pattern is not None:
+            if self.search_pattern == '/q':
+                choices = self.question.choices or []
+                self.filtered_choices = None    # reset
+            else:
+                choices = self.choices_searcher(choices, self.search_pattern)
+                self.filtered_choices = choices
+            self.search_pattern = None          # reset
+            self.current = 0
+
+        self.n_current_choices = len(choices)
+
+        if self.is_long:
+            # TODO: change the style of keeping chosen item in the middle.
+            # Becasue it may lead to some problem while number of
+            # `self.filtered_choices` is not odd.
+            cmin = 0
+            if self.filtered_choices is not None:
+                cmax = len(self.filtered_choices)
+            else:
+                cmax = self.max_options_in_display
+            half_options = int((cmax - 1) / 2)
+
+            if half_options < self.current < len(choices) - half_options:
+                cmin += self.current - half_options
+                cmax += self.current - half_options
+            elif self.current >= len(choices) - half_options:
+                cmin += len(choices) - cmax
                 cmax += len(choices)
 
             cchoices = choices[cmin:cmax]
@@ -230,6 +300,55 @@ class ListBox(List):
                 color = self.theme.List.unselected_color
                 symbol = ' '
             yield choice, symbol, color
+
+    def process_input(self, pressed):
+        question = self.question
+        if pressed == key.UP:
+            if question.carousel and self.current == 0:
+                self.current = len(question.choices) - 1
+                return True
+            else:
+                # this should be determined before changing `self.current`
+                need_to_rerender = self.current != 0
+                self.current = max(0, self.current - 1)
+                return need_to_rerender
+        if pressed == key.DOWN:
+            if question.carousel and self.current == len(question.choices) - 1:
+                self.current = 0
+                return True
+            else:
+                # this should be determined before changing `self.current`
+                need_to_rerender = self.current != (self.n_current_choices - 1)
+                self.current = min(
+                    # len(self.question.choices) - 1,
+                    self.n_current_choices - 1,
+                    self.current + 1
+                )
+                return need_to_rerender
+        if pressed == key.ENTER:
+            if self.filtered_choices is not None:
+                # We are under the search mode
+                if len(self.filtered_choices) != 0:
+                    value = self.filtered_choices[self.current]
+                else:
+                    raise errors.EndOfInput(None)
+            else:
+                value = self.question.choices[self.current]
+            raise errors.EndOfInput(getattr(value, 'value', value))
+
+        # Search mode related
+        if pressed == '/':
+            if self.choices_searcher is None:
+                # Searcher is no available, so that search mode is disabled.
+                return False
+            pattern = input('Enter pattern to search (enter "/q" to quit): ')
+            self.search_pattern = pattern
+            clear_code = self.terminal.move_up() + self.terminal.clear_eol()
+            print(clear_code*2)
+            return True
+
+        if pressed == key.CTRL_C:
+            raise KeyboardInterrupt()
 
 
 class DefaultTheme(_DefaultTheme):
