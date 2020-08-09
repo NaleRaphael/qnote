@@ -2,6 +2,7 @@ import textwrap as tw
 
 from qnote.cli.operator import NotebookOperator
 from qnote.internal.exceptions import (
+    UserCancelledException,
     StorageCheckException,
     StorageRuntimeError,
     SafeExitException,
@@ -185,9 +186,12 @@ class NotebookManager(object):
 
         notes = storer.get_notes_from_notebook(nb_name, n_limit=None)
 
-        selected_notes = NotebookOperator(self.config).select_notes(
-            notes, multiple=multiple, show_date=show_date, show_uuid=show_uuid
-        )
+        try:
+            selected_notes = NotebookOperator(self.config).select_notes(
+                notes, multiple=multiple, show_date=show_date, show_uuid=show_uuid
+            )
+        except UserCancelledException:
+            raise SafeExitException()
 
         if len(selected_notes) == 0:
             raise SafeExitException('No results found.')
@@ -202,3 +206,15 @@ class NotebookManager(object):
             've' if is_plural else 's'
         )
         print(msg)
+
+    def clear_selected_notes(self):
+        uuids = CachedNoteUUIDs.get()
+
+        if len(uuids) == 0:
+            print('No note was selected.')
+        else:
+            CachedNoteUUIDs.clear()
+            msg = 'The following records are cleared:\n%s' % (
+                '\n'.join([v for v in uuids])
+            )
+            print(msg)

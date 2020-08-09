@@ -18,20 +18,17 @@ class SelectCommand(Command):
 
     def __init__(self, *args, **kwargs):
         super(SelectCommand, self).__init__(*args, **kwargs)
-        self.no_more_subcommands = True
 
     def run(self, parsed_args, config):
         kwargs, _ = parsed_args
-        select_multiple = kwargs['multiple']
-        show_date = kwargs['date']
-        show_uuid = kwargs['uuid']
+        cmd = kwargs.pop('cmd')
+        cmd = 'select' if cmd is None else cmd
+        runner = getattr(self, '_run_%s' % cmd, None)
+        if runner is None:
+            raise RuntimeError('Invalid command: %s' % cmd)
 
         try:
-            NotebookManager(config).select_notes(
-                multiple=select_multiple,
-                show_date=show_date,
-                show_uuid=show_uuid,
-            )
+            runner(kwargs, config)
         except SafeExitException as ex:
             print(ex)
 
@@ -59,4 +56,29 @@ class SelectCommand(Command):
             default=ARG_SUPPRESS,
             help='Show this help message and exit.'
         )
+
+        subparsers = parser.add_subparsers(dest='cmd')
+        parser_clear = subparsers.add_parser(
+            'clear', prog='clear', add_help=False,
+            description='Clear selected notes from cache.'
+        )
+        parser_clear.add_argument(
+            '-h', '--help', action='help',
+            default=ARG_SUPPRESS,
+            help='Show this help message and exit.'
+        )
         return parser
+
+    def _run_select(self, parsed_kwargs, config):
+        select_multiple = parsed_kwargs['multiple']
+        show_date = parsed_kwargs['date']
+        show_uuid = parsed_kwargs['uuid']
+
+        NotebookManager(config).select_notes(
+            multiple=select_multiple,
+            show_date=show_date,
+            show_uuid=show_uuid,
+        )
+
+    def _run_clear(self, parsed_kwargs, config):
+        NotebookManager(config).clear_selected_notes()

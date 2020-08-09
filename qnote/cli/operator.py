@@ -6,7 +6,7 @@ from qnote.editor import get_editor
 from qnote.objects import Notebook, Note, Tag, Tags
 from qnote.internal.exceptions import (
     EditorNotFoundException, EditorNotSupportedException,
-    UserCancelledException
+    UserCancelledException, SafeExitException,
 )
 from qnote.utils import query_yes_no, NoteFormatter
 from qnote.vendor.inquirer import (
@@ -205,8 +205,11 @@ class NotebookOperator(object):
             'choices_searcher': choices_searcher,
         }
         render = ListBoxRender(theme=theme, render_config=render_config)
-        retval = inquirer_prompt(questions, render=render)
-        result = retval['selected']
+        try:
+            retval = inquirer_prompt(questions, render=render, raise_keyboard_interrupt=True)
+            result = retval['selected']
+        except KeyboardInterrupt as ex:
+            raise UserCancelledException() from ex
 
         if result is None:
             return []
