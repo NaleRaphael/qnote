@@ -41,7 +41,7 @@ class CachedNoteUUIDs(object):
     def _read(cls, fn):
         with open(fn, 'r') as f:
             uuids = f.readlines()
-        return name
+        return uuids
 
     @classmethod
     def _write(cls, fn, uuids):
@@ -52,7 +52,7 @@ class CachedNoteUUIDs(object):
     def get(cls):
         config = AppConfig.load()
         fn = config.fn_cached_note_uuid
-        if not osp.exists():
+        if not osp.exists(fn):
             return []
         else:
             return cls._read(fn)
@@ -63,3 +63,9 @@ class CachedNoteUUIDs(object):
         fn = config.fn_cached_note_uuid
         content = '\n'.join([str(v) for v in uuids])
         cls._write(fn, content)
+
+    @classmethod
+    def clear(cls):
+        config = AppConfig.load()
+        fn = config.fn_cached_note_uuid
+        cls._write(fn, '')
