@@ -8,7 +8,9 @@ from qnote.internal.exceptions import (
     EditorNotFoundException, EditorNotSupportedException,
     UserCancelledException, SafeExitException,
 )
-from qnote.utils import query_yes_no, NoteFormatter
+from qnote.utils import (
+    query_yes_no, NoteFormatter, show_notes as utils_show_notes
+)
 from qnote.vendor.inquirer import (
     ConsoleRender, DefaultEditorQuestion, DefaultTheme,
     ListBoxRender, ListBoxQuestion,
@@ -131,42 +133,13 @@ class NotebookOperator(object):
         self.config = config
 
     def show_notes(self, notes, show_date=False, show_uuid=False):
-        from shutil import which
-
-        # 3: title, tags, content; 2: newlines for spacing
-        n_lines = len(notes) * (
-            3 + int(show_date) + int(show_uuid) + self.config.display.max_lines + 2
-        )
-        pager = self.config.display.pager
-        use_pager = False
-
-        # Check whether pager is necessary to use
-        # TODO: maybe we can detect current terminal height for this
-        if which(pager) is not None and n_lines > 50:
-            import os, pydoc
-
-            use_pager = True
-            if os.getenv('PAGER', None) is None:
-                os.environ['PAGER'] = pager
-
-        # Prepare formatter
         tw_config = {
             'witdh': self.config.display.width,
             'max_lines': self.config.display.max_lines,
         }
-        formatter = NoteFormatter(
-            self.config, tw_config=tw_config, show_date=show_date, show_uuid=show_uuid
+        utils_show_notes(
+            notes, self.config, tw_config, show_date=show_date, show_uuid=show_uuid
         )
-
-        # Print notes
-        output = ''
-        for note in notes:
-            output += '\n%s\n' % formatter(note)
-
-        if use_pager:
-            pydoc.pager(output)
-        else:
-            print(output)
 
     def select_notes(self, notes, multiple=False, show_date=False, show_uuid=False,
         clear_after_exit=False):

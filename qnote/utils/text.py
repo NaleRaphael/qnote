@@ -2,7 +2,7 @@ from datetime import datetime as dt
 import textwrap as tw
 
 
-__all__ = ['NoteFormatter', 'show_note']
+__all__ = ['NoteFormatter', 'show_notes']
 
 
 class NoteFormatter(object):
@@ -48,19 +48,60 @@ class NoteFormatter(object):
         return '\n'.join([fmt(note) for fmt in self.formatter])
 
 
-def show_note(note, app_config, tw_config, show_date=True, show_uuid=True):
-    from shutil import which
+class Pager(object):
+    def __init__(self, app_config):
+        self.app_config = app_config
 
-    # Check and setup pager
-    pager = app_config.display.pager
-    use_pager = False
+    def __call__(self, content):
+        raise NotImplementedError
 
-    if which(pager) is not None:
-        import os, pydoc
 
-        use_pager = True
-        if os.getenv('PAGER', None) is None:
-            os.environ['PAGER'] = pager
+class LessPager(Pager):
+    # Reference of redirecting content to `less` (without creating a tempfile)
+    # https://chase-seibert.github.io/blog/2012/10/31/python-fork-exec-vim-raw-input.html
+
+    def __call__(self, content):
+        from subprocess import Popen, PIPE
+        from sys import stdout
+
+        if not isinstance(content, (str, bytes)):
+            raise TypeError('Unknown input type for paging.')
+
+        try:
+            cmd = ['less', '-F', '-R', '-S', '-X', '-K']
+            proc = Popen(cmd, stdin=PIPE, stdout=stdout)
+
+            if isinstance(content, str):
+                proc._stdin_write(content.encode())
+            else:
+                proc._stdin_write(content)
+
+            proc.stdin.close()
+            proc.wait()
+        except KeyboardInterrupt:
+            pass
+
+
+class PydocPager(Pager):
+    def __call__(self, content):
+        import pydoc
+
+        pydoc.pager(content)
+
+
+available_pagers = {
+    'less': LessPager,
+    'pydoc': PydocPager,
+}
+
+def prepare_pager(app_config):
+    pager_name = app_config.display.pager
+    cls_pager = available_pagers.get(pager_name, PydocPager)
+    return cls_pager(app_config)
+
+
+def show_notes(notes, app_config, tw_config, show_date=True, show_uuid=True):
+    pager = prepare_pager(app_config)
 
     # Setup formatter
     formatter = NoteFormatter(
@@ -71,8 +112,7 @@ def show_note(note, app_config, tw_config, show_date=True, show_uuid=True):
     )
 
     # Print notes
-    output = formatter(note)
-    if use_pager:
-        pydoc.pager(output)
-    else:
-        print(output)
+    output = ''
+    for note in notes:
+        output += '\n%s\n' % formatter(note)
+    pager(output)

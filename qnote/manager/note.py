@@ -7,7 +7,7 @@ from qnote.internal.exceptions import (
 from qnote.objects import Note, Tags
 from qnote.storage import get_storer
 from qnote.status import HEAD, CachedNoteUUIDs
-from qnote.utils import show_note as utils_show_note
+from qnote.utils import show_notes as utils_show_notes
 
 
 __all__ = ['NoteManager']
@@ -55,7 +55,7 @@ class NoteManager(object):
             note = storer.get_note(uuid)
 
         tw_config = {'max_lines': None}     # show all content
-        utils_show_note(note, self.config, tw_config)
+        utils_show_notes([note], self.config, tw_config)
 
     def show_note_from_selected(self):
         storer = get_storer(self.config)
@@ -71,4 +71,4 @@ class NoteManager(object):
 
         note = storer.get_note(uuid)
         tw_config = {'max_lines': None}     # show all content
-        utils_show_note(note, self.config, tw_config)
+        utils_show_notes([note], self.config, tw_config)
