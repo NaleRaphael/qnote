@@ -2,7 +2,7 @@ from datetime import datetime as dt
 import textwrap as tw
 
 
-__all__ = ['NoteFormatter']
+__all__ = ['NoteFormatter', 'show_note']
 
 
 class NoteFormatter(object):
@@ -12,16 +12,12 @@ class NoteFormatter(object):
         self._prepare_subformatter(show_date=show_date, show_uuid=show_uuid)
 
     def _prepare_textwrapper(self, **kwargs):
-        self.tw_config = {
-            'width': kwargs.get('width', 70),
-            'tabsize': kwargs.get('tabsize', 4),
-            'replace_whitespace': kwargs.get('replace_whitespace', False),
-            'drop_whitespace': kwargs.get('drop_whitespace', True),
-            'max_lines': kwargs.get('max_lines', 3),
-            'placeholder': kwargs.get('placeholder', '...'),
-            'initial_indent': kwargs.get('initial_indent', '    '),
-            'subsequent_indent': kwargs.get('subsequent_indent', '    '),
-        }
+        cfg = self.app_config.display
+        keys = [
+            'width', 'tabsize', 'replace_whitespace', 'drop_whitespace',
+            'max_lines', 'placeholder', 'initial_indent', 'subsequent_indent',
+        ]
+        self.tw_config = {k: getattr(cfg, k) for k in keys}
         self.text_wrapper = tw.TextWrapper(**self.tw_config)
 
     def _prepare_subformatter(self, show_date=False, show_uuid=False):
@@ -50,3 +46,33 @@ class NoteFormatter(object):
 
     def __call__(self, note):
         return '\n'.join([fmt(note) for fmt in self.formatter])
+
+
+def show_note(note, app_config, tw_config, show_date=True, show_uuid=True):
+    from shutil import which
+
+    # Check and setup pager
+    pager = app_config.display.pager
+    use_pager = False
+
+    if which(pager) is not None:
+        import os, pydoc
+
+        use_pager = True
+        if os.getenv('PAGER', None) is None:
+            os.environ['PAGER'] = pager
+
+    # Setup formatter
+    formatter = NoteFormatter(
+        app_config,
+        tw_config=tw_config,
+        show_date=show_date,
+        show_uuid=show_uuid
+    )
+
+    # Print notes
+    output = formatter(note)
+    if use_pager:
+        pydoc.pager(output)
+    else:
+        print(output)

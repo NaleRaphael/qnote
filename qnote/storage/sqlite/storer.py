@@ -90,6 +90,27 @@ class SQLiteStorer(BaseStorer):
                 transaction.rollback()
                 raise StorageExecutionException(str(ex)) from ex
 
+    def get_note(self, note_uuid):
+        query = (
+            Note
+            .select(Note, pw.fn.group_concat(Tag.name).alias('tags'))
+            .where(Note.uuid == note_uuid)
+            .join(NoteToTag)
+            .join(Tag)
+            .group_by(Note.uuid)
+        )
+        result = list(query.namedtuples())
+
+        if len(result) == 0:
+            msg = 'Failed to find note with UUID: %s' % note_uuid
+            raise StorageExecutionException(msg)
+
+        if len(result) > 1:
+            msg = 'Duplicate notes found.'
+            raise StorageExecutionException(msg)
+
+        return qo.Note.from_dict(result[0]._asdict())
+
     def check_notebook_exist(self, nb_name):
         """
         Parameters

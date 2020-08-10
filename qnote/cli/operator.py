@@ -168,7 +168,8 @@ class NotebookOperator(object):
         else:
             print(output)
 
-    def select_notes(self, notes, multiple=False, show_date=False, show_uuid=False):
+    def select_notes(self, notes, multiple=False, show_date=False, show_uuid=False,
+        clear_after_exit=False):
         """Interactive mode for selecting note from a list."""
         tw_config = {
             'witdh': self.config.display.width,
@@ -203,6 +204,7 @@ class NotebookOperator(object):
         render_config = {
             'message_handler': message_handler,
             'choices_searcher': choices_searcher,
+            'clear_after_exit': clear_after_exit,
         }
         render = ListBoxRender(theme=theme, render_config=render_config)
         try:
