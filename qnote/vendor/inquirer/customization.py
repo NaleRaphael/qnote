@@ -54,6 +54,7 @@ class ListBoxRender(_ConsoleRender):
         self.render_config = kwargs.pop('render_config', {})
         self._printed_lines = 0
         self.message_handler = self.render_config.pop('message_handler', None)
+        self.clear_after_exit = self.render_config.pop('clear_after_exit', False)
         super(ListBoxRender, self).__init__(*args, **kwargs)
 
     def render(self, question, answers=None):
@@ -174,6 +175,8 @@ class ListBoxRender(_ConsoleRender):
         except errors.ValidationError as e:
             self._previous_error = e.value
         except errors.EndOfInput as e:
+            if self.clear_after_exit:
+                self._relocate()
             try:
                 render.question.validate(e.selection)
                 raise
