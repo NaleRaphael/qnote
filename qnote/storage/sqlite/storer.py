@@ -111,6 +111,70 @@ class SQLiteStorer(BaseStorer):
 
         return qo.Note.from_dict(result[0]._asdict())
 
+    def update_note(self, note):
+        if not isinstance(note, qo.Note):
+            raise TypeError('`note` should be an instance of %s' % qo.Note)
+
+        data = note.to_dict()
+
+        # pop out those fields should not be updated
+        data.pop('uuid')
+        data.pop('create_time')
+        data.pop('tags')
+        data_to_update = {getattr(Note, k): v for k, v in data.items()}
+
+        with self.db.atomic() as transaction:
+            try:
+                pw_ori_note = list(Note.select().where(Note.uuid == note.uuid))
+                if len(pw_ori_note) > 1:
+                    raise StorageExecutionException('Duplicate records.')
+                if len(pw_ori_note) == 0:
+                    raise StorageExecutionException('Record not found: %s' % note.uuid)
+                pw_ori_note = pw_ori_note[0]
+
+                query = (
+                    Note
+                    .update(data_to_update)
+                    .where(Note.uuid == note.uuid)
+                )
+                n_updated = query.execute()
+
+                # sanity check
+                if n_updated > 1:
+                    raise StorageExecutionException('Duplicate records.')
+                if n_updated == 0:
+                    raise StorageExecutionException('No record got updated.')
+
+                # add new tags and delete removed tags
+                pw_ori_tags = list(
+                    Tag
+                    .select()
+                    .join(NoteToTag)
+                    .where(NoteToTag.note_id == pw_ori_note.id)
+                )
+                ori_tags = qo.Tags([v.name for v in pw_ori_tags])
+
+                tags_to_add = list(set(note.tags) - set(ori_tags))
+                tags_to_delete = list(set(ori_tags) - set(note.tags))
+
+                if len(tags_to_add) != 0:
+                    tag_names = [str(v) for v in tags_to_add]
+                    pw_tags_to_add = list(Tag.select().where(Tag.name.in_(tag_names)))
+                    for v in tag_names:
+                        pw_tag, _ = Tag.get_or_create(name=str(v))
+                        pw_note2tag = NoteToTag.create(note=pw_ori_note, tag=pw_tag)
+
+                if len(tags_to_delete) != 0:
+                    tag_names = [str(v) for v in tags_to_delete]
+                    pw_tags_to_delete = list(Tag.select().where(Tag.name.in_(tag_names)))
+                    query_delete_tags = NoteToTag.delete().where(
+                        (NoteToTag.note_id == pw_ori_note.id) &
+                        (NoteToTag.tag_id.in_([v.id for v in pw_tags_to_delete]))
+                    ).execute()
+            except Exception as ex:
+                transaction.rollback()
+                raise StorageExecutionException(str(ex)) from ex
+
     def check_notebook_exist(self, nb_name):
         """
         Parameters

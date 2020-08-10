@@ -72,3 +72,49 @@ class NoteManager(object):
         note = storer.get_note(uuid)
         tw_config = {'max_lines': None}     # show all content
         utils_show_notes([note], self.config, tw_config)
+
+    def edit_note(self, uuid, editor_name=None):
+        storer = get_storer(self.config)
+
+        if uuid is None:
+            # Enter interactive mode and let user select note from current notebook
+            nb_name = HEAD.get()
+            notes = storer.get_notes_from_notebook(nb_name, n_limit=None)
+
+            try:
+                selected_notes = NotebookOperator(self.config).select_notes(
+                    notes, multiple=False, show_date=True, show_uuid=True,
+                    clear_after_exit=True,
+                )
+
+                assert len(selected_notes) == 1
+                note = selected_notes[0]
+            except UserCancelledException:
+                raise SafeExitException()
+        else:
+            note = storer.get_note(uuid)
+
+        edited_note = NoteOperator(self.config).edit_note(
+            note, editor_name=editor_name
+        )
+
+        storer.update_note(note)
+
+    def edit_note_from_selected(self, editor_name=None):
+        storer = get_storer(self.config)
+        uuids = CachedNoteUUIDs.get()
+
+        if len(uuids) == 0:
+            raise SafeExitException('No selected note.')
+        if len(uuids) > 1:
+            # TODO: enter interactive mode
+            raise NotImplementedError
+        else:
+            uuid = uuids[0]
+
+        note = storer.get_note(uuid)
+        edited_note = NoteOperator(self.config).edit_note(
+            note, editor_name=editor_name
+        )
+
+        storer.update_note(note)

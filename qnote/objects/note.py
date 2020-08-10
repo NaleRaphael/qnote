@@ -93,3 +93,7 @@ class Note(object):
             'content': self.content.to_format(str),
             'tags': str(self.tags),
         }
+
+    def update_content(self, raw_content):
+        self.content = Content(raw_content)
+        self.update_time = int(cls_dt.now().timestamp())
