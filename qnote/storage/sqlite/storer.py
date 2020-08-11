@@ -95,8 +95,8 @@ class SQLiteStorer(BaseStorer):
             Note
             .select(Note, pw.fn.group_concat(Tag.name).alias('tags'))
             .where(Note.uuid == note_uuid)
-            .join(NoteToTag)
-            .join(Tag)
+            .join(NoteToTag, join_type=pw.JOIN.LEFT_OUTER)
+            .join(Tag, join_type=pw.JOIN.LEFT_OUTER)
             .group_by(Note.uuid)
         )
         result = list(query.namedtuples())
