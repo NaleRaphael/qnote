@@ -153,6 +153,24 @@ class NotebookManager(object):
             )
             print(msg)
 
+    def clear_trash_can(self, skip_confirmation=False):
+        name = self.config.notebook.name_trash
+
+        if not skip_confirmation:
+            if not NotebookOperator(self.config).confirm_to_clear(name):
+                raise SafeExitException('Operation is cancelled')
+
+        storer = get_storer(self.config)
+        n_cleared = storer.clear_notebook(name)
+
+        is_plural = n_cleared > 1
+        msg = '%s note%s ha%s been deleted.' % (
+            n_cleared,
+            's' if is_plural else '',
+            've' if is_plural else 's'
+        )
+        print(msg)
+
     def show_all_notes(self, show_date=False, show_uuid=False):
         # TODO: functionality of this method is similar to `self.show_status`,
         # maybe we can rewrite this later?

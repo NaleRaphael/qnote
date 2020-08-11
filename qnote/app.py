@@ -14,6 +14,7 @@ __all__ = ['Application']
 
 subcommands = {
     'add': cmds.AddCommand('add'),
+    'clear': cmds.ClearCommand('clear'),
     'edit': cmds.EditCommand('edit'),
     'help': cmds.HelpCommand('help'),
     'list': cmds.ListCommand('list'),

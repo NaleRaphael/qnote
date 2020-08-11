@@ -175,6 +175,9 @@ class SQLiteStorer(BaseStorer):
                 transaction.rollback()
                 raise StorageExecutionException(str(ex)) from ex
 
+    def delete_note(self, note, nb_name):
+        raise NotImplementedError
+
     def check_notebook_exist(self, nb_name):
         """
         Parameters
@@ -289,6 +292,34 @@ class SQLiteStorer(BaseStorer):
             except Exception as ex:
                 transaction.rollback()
                 raise StorageExecutionException(str(ex)) from ex
+
+    def clear_notebook(self, nb_name):
+        with self.db.atomic() as transaction:
+            try:
+                pw_trash_can = list(Notebook.select().where(Notebook.name == nb_name))
+                trash_can_id = pw_trash_can[0].id
+
+                pw_notes = list(
+                    Note
+                    .select()
+                    .join(NoteToNotebook)
+                    .where(NoteToNotebook.notebook_id == trash_can_id)
+                )
+                NoteToTag.delete().where(
+                    NoteToTag.note_id.in_(pw_notes)
+                ).execute()
+                q_del_notebook = NoteToNotebook.delete().where(
+                    NoteToNotebook.notebook_id == trash_can_id
+                )
+                assert q_del_notebook.execute() == len(pw_notes)
+                q_del_notes = Note.delete().where(
+                    Note.id.in_(pw_notes)
+                )
+                assert q_del_notes.execute() == len(pw_notes)
+            except Exception as ex:
+                transaction.rollback()
+                raise StorageExecutionException(str(ex)) from ex
+        return len(pw_notes)
 
     def delete_notebook(self, nb_name):
         query = (

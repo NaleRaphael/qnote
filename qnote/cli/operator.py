@@ -224,6 +224,12 @@ class NotebookOperator(object):
         else:
             return result if isinstance(result, list) else [result]
 
+    def confirm_to_clear(self, nb_name):
+        msg = (
+            'Are you sure you want to delete all notes in this notebook "%s"?' % nb_name
+        )
+        return query_yes_no(msg, default='no', back_n_lines=1)
+
 
 def open_default_editor(fn_tmp='', init_content=''):
     questions = [
