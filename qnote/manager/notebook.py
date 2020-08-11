@@ -117,7 +117,7 @@ class NotebookManager(object):
         if HEAD.get() == old_name:
             HEAD.set(new_name)
 
-    def delete_notebook(self, name, forcibly=False):
+    def delete_notebook(self, name, forcibly=False, skip_confirmation=False):
         non_deletable = [
             self.config.notebook.name_default,
             self.config.notebook.name_trash,
@@ -139,6 +139,10 @@ class NotebookManager(object):
                 'notebook. You can add "-f" flag to force delete it.' % name
             )
             raise SafeExitException(msg)
+
+        if not skip_confirmation:
+            if not NotebookOperator(self.config).confirm_to_clear(name):
+                raise SafeExitException('Operation is cancelled')
 
         # Delete notebook
         storer.delete_notebook(notebook.name)

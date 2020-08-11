@@ -1,6 +1,4 @@
-from argparse import SUPPRESS as ARG_SUPPRESS
-
-from qnote.cli.parser import CustomArgumentParser
+from qnote.cli.parser import CustomArgumentParser, ARG_SUPPRESS
 from qnote.internal.exceptions import SafeExitException
 from qnote.manager import NotebookManager
 
@@ -11,10 +9,11 @@ __all__ = ['SelectCommand']
 
 class SelectCommand(Command):
     """Select a note. If no argument is given, interactive mode will start
-    with opened notebook."""
+    with an opened notebook."""
 
     _usage = """
-    <prog>"""
+    <prog> [--multiple] [--date] [--uuid]
+    <prog> clear"""
 
     def __init__(self, *args, **kwargs):
         super(SelectCommand, self).__init__(*args, **kwargs)
@@ -35,11 +34,12 @@ class SelectCommand(Command):
     def prepare_parser(self):
         parser = CustomArgumentParser(
             prog=self.name, usage=self.usage, add_help=False,
+            description=self.__doc__,
         )
         parser.add_argument(
             '--multiple', action='store_true',
             help=(
-                'If this flag is set, user can select multiple notebook in '
+                'If this flag is set, user can select multiple notebooks in '
                 'the interactive mode.'
             )
         )

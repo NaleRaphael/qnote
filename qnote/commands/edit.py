@@ -1,6 +1,6 @@
-from argparse import SUPPRESS as ARG_SUPPRESS
-
-from qnote.cli.parser import CustomArgumentParser, PassableHelpAction
+from qnote.cli.parser import (
+    CustomArgumentParser, PassableHelpAction, ARG_SUPPRESS
+)
 from qnote.internal.exceptions import SafeExitException
 from qnote.manager import NoteManager
 
@@ -10,7 +10,7 @@ __all__ = ['EditCommand']
 
 
 class EditCommand(Command):
-    """Open a note for viewing only."""
+    """Edit a note."""
 
     _usage = """
     <prog> [--uuid <note_uuid>] [--editor <editor_name>]
@@ -52,8 +52,7 @@ class EditCommand(Command):
             help='Open and edit a note with specified editor.'
         )
         parser.add_argument(
-            '-h', '--help', action='help',
-            default=ARG_SUPPRESS,
+            '-h', '--help', action='help', default=ARG_SUPPRESS,
             help='Show this help message and exit.'
         )
 

@@ -1,4 +1,4 @@
-from qnote.cli.parser import CustomArgumentParser
+from qnote.cli.parser import CustomArgumentParser, ARG_SUPPRESS
 from qnote.internal.exceptions import SafeExitException
 from qnote.manager import NotebookManager
 from qnote.utils import query_yes_no
@@ -10,7 +10,7 @@ __all__ = ['ClearCommand']
 
 
 class ClearCommand(Command):
-    """Clear trash can."""
+    """Clear trash can. (all notes in it will be deleted permanently)"""
 
     _usage = """
     <prog> [-y | --yes]"""
@@ -28,9 +28,16 @@ class ClearCommand(Command):
             print(ex)
 
     def prepare_parser(self):
-        parser = CustomArgumentParser(prog=self.name, usage=self.usage)
+        parser = CustomArgumentParser(
+            prog=self.name, usage=self.usage, add_help=False,
+            description=self.__doc__,
+        )
         parser.add_argument(
             '-y', '--yes', action='store_true',
             help='Automatically answer YES to the prompt for confirmation.'
+        )
+        parser.add_argument(
+            '-h', '--help', action='help', default=ARG_SUPPRESS,
+            help='Show this help message and exit.'
         )
         return parser

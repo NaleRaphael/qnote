@@ -4,7 +4,7 @@ from gettext import gettext as _
 import sys as _sys
 
 
-__all__ = ['CustomArgumentParser', 'PassableHelpAction']
+__all__ = ['CustomArgumentParser', 'PassableHelpAction', 'ARG_SUPPRESS']
 
 
 class CustomArgumentParser(ArgumentParser):
@@ -43,6 +43,30 @@ class CustomArgumentParser(ArgumentParser):
         self.print_usage(_sys.stderr)
         args = {'prog': self.prog, 'message': message}
         self.exit(2, _('%(prog)s: error: %(message)s\n') % args)
+
+    def format_help(self):
+        formatter = self._get_formatter()
+
+        # description
+        formatter.add_text(self.description)
+
+        # usage
+        formatter.add_usage(
+            self.usage, self._actions, self._mutually_exclusive_groups
+        )
+
+        # positionals, optionals and user-defined groups
+        for action_group in self._action_groups:
+            formatter.start_section(action_group.title)
+            formatter.add_text(action_group.description)
+            formatter.add_arguments(action_group._group_actions)
+            formatter.end_section()
+
+        # epilog
+        formatter.add_text(self.epilog)
+
+        # determine help from format above
+        return formatter.format_help()
 
 
 class PassableHelpAction(Action):

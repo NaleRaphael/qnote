@@ -16,7 +16,6 @@ subcommands = {
     'add': cmds.AddCommand('add'),
     'clear': cmds.ClearCommand('clear'),
     'edit': cmds.EditCommand('edit'),
-    'help': cmds.HelpCommand('help'),
     'list': cmds.ListCommand('list'),
     'notebook': cmds.NotebookCommand('notebook'),
     'open': cmds.OpenCommand('open'),
@@ -36,7 +35,7 @@ def _process_usage(usage, delimiter='\n', skip_row=1, left_padding=0):
 def prepare_usage():
     msg = '\n'
     temp = []
-    n_padding = len('qnote') - 4    # 4: size of tab
+    n_padding = len('qnote')
     sub_usages = [
         '<prog> %s' % (
             _process_usage(sc.usage.lstrip(), left_padding=n_padding)
@@ -45,11 +44,16 @@ def prepare_usage():
     msg_subs = '\n'.join(sub_usages)
     msg += msg_subs
     regex = re.compile('<prog>')
-    msg = regex.sub('qnote', msg)
+    msg = regex.sub('    qnote', msg)
     return msg
 
 
 class CommandEntry(cmds.Command):
+    """qnote - Take notes quickly
+
+    A command line note-taking tool.
+    """
+
     def __init__(self, *args, **kwargs):
         super(CommandEntry, self).__init__(*args, **kwargs)
 
@@ -62,10 +66,11 @@ class CommandEntry(cmds.Command):
     def prepare_parser(self):
         parser = CustomArgumentParser(
             prog='qnote', usage=prepare_usage(), add_help=False,
+            description=self.__doc__,
         )
         parser.add_argument(
             'cmd', metavar='cmd', choices=list(subcommands.keys()),
-            help='Subcommands'
+            help='One of {%s}' % ', '.join(subcommands.keys()),
         )
         parser.add_argument(
             '-h', '--help', action=PassableHelpAction,

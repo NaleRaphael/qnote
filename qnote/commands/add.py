@@ -1,7 +1,5 @@
-from argparse import SUPPRESS as ARG_SUPPRESS
-
-from qnote.cli.parser import CustomArgumentParser
-from qnote.objects import Content, Note, Tags
+from qnote.cli.parser import CustomArgumentParser, ARG_SUPPRESS
+from qnote.internal.exceptions import SafeExitException
 from qnote.manager import NoteManager
 
 from .base_command import Command
@@ -21,15 +19,19 @@ class AddCommand(Command):
 
     def run(self, parsed_args, config):
         kwargs, _ = parsed_args
-        NoteManager(config).create_note(
-            kwargs['title'],
-            kwargs['content'],
-            kwargs['tags']
-        )
+        try:
+            NoteManager(config).create_note(
+                kwargs['title'],
+                kwargs['content'],
+                kwargs['tags']
+            )
+        except SafeExitException as ex:
+            print(ex)
 
     def prepare_parser(self):
         parser = CustomArgumentParser(
             prog=self.name, usage=self.usage, add_help=False,
+            description=self.__doc__,
         )
         parser.add_argument(
             '-t', '--title', dest='title', metavar='<title>',

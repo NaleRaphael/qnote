@@ -33,6 +33,7 @@ class StatusCommand(Command):
     def prepare_parser(self):
         parser = CustomArgumentParser(
             prog=self.name, usage=self.usage, add_help=False,
+            description=self.__doc__,
         )
         parser.add_argument(
             'name', metavar='<notebook_name>', nargs='?', default=None,

@@ -1,4 +1,4 @@
-from qnote.cli.parser import CustomArgumentParser
+from qnote.cli.parser import CustomArgumentParser, ARG_SUPPRESS
 from qnote.internal.exceptions import SafeExitException
 from qnote.manager import NotebookManager
 
@@ -35,20 +35,37 @@ class NotebookCommand(Command):
             print(ex)
 
     def prepare_parser(self):
-        parser = CustomArgumentParser(prog=self.name, usage=self.usage)
+        parser = CustomArgumentParser(
+            prog=self.name, usage=self.usage,
+            description=self.__doc__,
+        )
         subparsers = parser.add_subparsers(dest='cmd', required=True)
 
-        parser_open = subparsers.add_parser('open', prog='open')
+        parser_open = subparsers.add_parser(
+            'open', prog='open',
+            description='Open a notebook.'
+        )
         parser_open.add_argument(
             'name', metavar='<name>', help='Name of notebook.'
         )
 
-        parser_create = subparsers.add_parser('create', prog='create')
+        parser_create = subparsers.add_parser(
+            'create', prog='create',
+            description='Create a notebook.'
+        )
         parser_create.add_argument(
             'name', metavar='<name>', help='Name of notebook.'
         )
 
-        parser_delete = subparsers.add_parser('delete', prog='delete')
+        parser_delete = subparsers.add_parser(
+            'delete', prog='delete',
+            description=(
+                'Delete a notebook. Existing notes will be deleted permanently. '
+                'Please consider using `qnote remove` to remove those notes '
+                'to trash can before deleting a notebook if you are not sure '
+                'that you really don\'t want to keep those notes.'
+            )
+        )
         parser_delete.add_argument(
             'name', metavar='<name>', help='Name of notebook.'
         )
@@ -56,8 +73,15 @@ class NotebookCommand(Command):
             '-f', '--force', action='store_true',
             help='Forcibly delete specified notebook.'
         )
+        parser_delete.add_argument(
+            '-y', '--yes', action='store_true',
+            help='Automatically answer YES to the prompt for confirmation.'
+        )
 
-        parser_list = subparsers.add_parser('list', prog='list')
+        parser_list = subparsers.add_parser(
+            'list', prog='list',
+            description='List all notebooks.'
+        )
         parser_list.add_argument(
             '--date', action='store_true',
             help='Show create_time and update_time of notebooks.'
@@ -67,7 +91,10 @@ class NotebookCommand(Command):
             help='Show all notebooks including those ones for special purpose.'
         )
 
-        parser_rename = subparsers.add_parser('rename', prog='rename')
+        parser_rename = subparsers.add_parser(
+            'rename', prog='rename',
+            description='Rename of notebook.'
+        )
         parser_rename.add_argument(
             'old_name', metavar='<old-name>',
             help='Old name of target notebook to be renamed.'
@@ -77,7 +104,10 @@ class NotebookCommand(Command):
             help='New name of the target notebook to be renamed.'
         )
 
-        parser_search = subparsers.add_parser('search', prog='search')
+        parser_search = subparsers.add_parser(
+            'search', prog='search',
+            description='Search a notebook (regular expression is supported).'
+        )
         parser_search.add_argument(
             'pattern', metavar='<pattern>',
             help='Pattern for searching notebooks.'
@@ -110,4 +140,7 @@ class NotebookCommand(Command):
     def _run_delete(self, parsed_kwargs, config):
         name = parsed_kwargs['name']
         forcibly = parsed_kwargs['force']
-        NotebookManager(config).delete_notebook(name, forcibly=forcibly)
+        yes = parsed_kwargs['yes']
+        NotebookManager(config).delete_notebook(
+            name, forcibly=forcibly, skip_confirmation=yes
+        )

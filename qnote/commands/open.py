@@ -68,7 +68,7 @@ class OpenCommand(Command):
     def _run_open(self, parsed_kwargs, config):
         uuid = parsed_kwargs['uuid']
         # If no uuid is given, enter interactive to select note from current notebook
-        NoteManager(config).show_note(uuid=uuid)
+        NoteManager(config).show_note(uuid)
 
     def _run_selected(self, parsed_kwargs, config):
         NoteManager(config).show_note_from_selected()

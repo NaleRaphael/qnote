@@ -1,4 +1,4 @@
-from qnote.cli.parser import CustomArgumentParser
+from qnote.cli.parser import CustomArgumentParser, ARG_SUPPRESS
 from qnote.internal.exceptions import SafeExitException
 from qnote.manager import NotebookManager
 
@@ -9,7 +9,7 @@ __all__ = ['ListCommand']
 
 
 class ListCommand(Command):
-    """List all notes in a notebook."""
+    """List all notes in current notebook."""
 
     _usage = """
     <prog> [--date] [--uuid]"""
@@ -34,6 +34,7 @@ class ListCommand(Command):
     def prepare_parser(self):
         parser = CustomArgumentParser(
             prog = self.name, usage=self.usage, add_help=False,
+            description=self.__doc__,
         )
         parser.add_argument(
             '--date', action='store_true',
@@ -42,5 +43,9 @@ class ListCommand(Command):
         parser.add_argument(
             '--uuid', action='store_true',
             help='Show uuid of notes.'
+        )
+        parser.add_argument(
+            '-h', '--help', action='help', default=ARG_SUPPRESS,
+            help='Show this help message and exit.'
         )
         return parser
