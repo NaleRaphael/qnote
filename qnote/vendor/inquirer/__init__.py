@@ -14,6 +14,7 @@ import os
 term = os.getenv('TERM', None)
 if term == 'cygwin':
     os.environ['TERM'] = 'xterm'
+    os.environ['WIN_TERM'] = 'cygwin'   # just a backup
 
 import inquirer
 from inquirer import *

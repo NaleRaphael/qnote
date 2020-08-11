@@ -1,5 +1,6 @@
 import errno, os, tempfile
-from subprocess import call
+from sys import stdout
+from subprocess import Popen, PIPE
 from shutil import which
 
 from qnote.internal.exceptions import (
@@ -69,7 +70,20 @@ class EditorBase(object):
         return content
 
     def call_editor(self, fn):
-        call([self.fn_executable, fn])
+        import os
+
+        win_term = os.getenv('WIN_TERM', None)
+        current_term = os.getenv('TERM')
+
+        # reset "TERM" env variable to 'cygwin' to avoid display issue
+        if current_term == 'xterm' and win_term == 'cygwin':
+            os.environ['TERM'] = 'cygwin'
+
+        proc = Popen([self.fn_executable, fn], close_fds=True)
+        proc.communicate()
+
+        # reset "TERM" env variable to 'xterm' for inquirer component
+        os.environ['TERM'] = current_term
 
 
 class VimEditor(EditorBase):
