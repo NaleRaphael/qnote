@@ -118,3 +118,49 @@ class NoteManager(object):
         )
 
         storer.update_note(note)
+
+    def remove_note(self, uuid):
+        storer = get_storer(self.config)
+
+        if uuid is None:
+            # Enter interactive mode and let user select note from current notebook
+            nb_name = HEAD.get()
+            notes = storer.get_notes_from_notebook(nb_name, n_limit=None)
+
+            try:
+                selected_notes = NotebookOperator(self.config).select_notes(
+                    notes, multiple=False, show_date=True, show_uuid=True,
+                    clear_after_exit=True,
+                )
+
+                assert len(selected_notes) == 1
+                note = selected_notes[0]
+            except UserCancelledException:
+                raise SafeExitException()
+        else:
+            note = storer.get_note(uuid)
+
+        n_removed = storer.remove_note_by_uuid(note.uuid)
+
+        msg = '%s note%s ha%s been removed to trash can.' % (
+            n_removed,
+            's' if n_removed > 1 else '',
+            've' if n_removed > 1 else 's'
+        )
+        print(msg)
+
+    def remove_note_from_selected(self):
+        storer = get_storer(self.config)
+        uuids = CachedNoteUUIDs.get()
+
+        if len(uuids) == 0:
+            raise SafeExitException('No selected note.')
+
+        n_removed = storer.remove_note_by_uuid(uuids)
+
+        msg = '%s note%s ha%s been removed to trash can.' % (
+            n_removed,
+            's' if n_removed > 1 else '',
+            've' if n_removed > 1 else 's'
+        )
+        print(msg)

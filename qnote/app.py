@@ -20,6 +20,7 @@ subcommands = {
     'list': cmds.ListCommand('list'),
     'notebook': cmds.NotebookCommand('notebook'),
     'open': cmds.OpenCommand('open'),
+    'remove': cmds.RemoveCommand('remove'),
     'status': cmds.StatusCommand('status'),
     'select': cmds.SelectCommand('select'),
 }

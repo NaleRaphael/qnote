@@ -175,8 +175,30 @@ class SQLiteStorer(BaseStorer):
                 transaction.rollback()
                 raise StorageExecutionException(str(ex)) from ex
 
-    def delete_note(self, note, nb_name):
-        raise NotImplementedError
+    def remove_note_by_uuid(self, note_uuids):
+        """Remove specific notes to trash can. But what we actually do here is
+        to update notebook_id of those notes to the id of trash can."""
+        if not isinstance(note_uuids, list):
+            note_uuids = [note_uuids]
+
+        nb_name = self.config.notebook.name_trash
+        pw_trash_can = list(Notebook.select().where(Notebook.name == nb_name))[0]
+
+        with self.db.atomic() as transaction:
+            try:
+                pw_notes = list(Note.select().where(Note.uuid.in_(note_uuids)))
+                query = (
+                    NoteToNotebook
+                    .update({NoteToNotebook.notebook_id: pw_trash_can.id})
+                    .where(NoteToNotebook.note_id.in_(pw_notes))
+                )
+                n_updated = query.execute()
+                assert n_updated == len(note_uuids)
+            except Exception as ex:
+                transaction.rollback()
+                raise StorageExecutionException(str(ex)) from ex
+
+        return n_updated
 
     def check_notebook_exist(self, nb_name):
         """

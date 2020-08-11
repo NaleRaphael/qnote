@@ -6,6 +6,7 @@ from .help import *
 from .list import *
 from .notebook import *
 from .open import *
+from .remove import *
 from .status import *
 from .select import *
 
@@ -19,10 +20,11 @@ __all__.extend(help.__all__)
 __all__.extend(list.__all__)
 __all__.extend(notebook.__all__)
 __all__.extend(open.__all__)
+__all__.extend(remove.__all__)
 __all__.extend(status.__all__)
 __all__.extend(select.__all__)
 
 del (
     base_command, add, clear, edit, help, list, notebook,
-    open, status, select,
+    open, remove, status, select,
 )
