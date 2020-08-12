@@ -11,11 +11,6 @@ from qnote.internal.exceptions import (
 from qnote.utils import (
     query_yes_no, NoteFormatter, show_notes as utils_show_notes
 )
-from qnote.vendor.inquirer import (
-    ConsoleRender, DefaultEditorQuestion, DefaultTheme,
-    ListBoxRender, ListBoxQuestion,
-)
-from qnote.vendor.inquirer import prompt as inquirer_prompt
 
 
 __all__ = ['NoteOperator', 'NotebookOperator']
@@ -177,6 +172,10 @@ class NotebookOperator(object):
     def select_notes(self, notes, multiple=False, show_date=False, show_uuid=False,
         clear_after_exit=False):
         """Interactive mode for selecting note from a list."""
+        from qnote.vendor.inquirer import (
+            DefaultTheme, ListBoxRender, ListBoxQuestion, prompt
+        )
+
         tw_config = {
             'witdh': self.config.display.width,
             'max_lines': self.config.display.max_lines,
@@ -214,7 +213,7 @@ class NotebookOperator(object):
         }
         render = ListBoxRender(theme=theme, render_config=render_config)
         try:
-            retval = inquirer_prompt(questions, render=render, raise_keyboard_interrupt=True)
+            retval = prompt(questions, render=render, raise_keyboard_interrupt=True)
             result = retval['selected']
         except KeyboardInterrupt as ex:
             raise UserCancelledException() from ex
@@ -232,11 +231,15 @@ class NotebookOperator(object):
 
 
 def open_default_editor(fn_tmp='', init_content=''):
+    from qnote.vendor.inquirer import (
+        DefaultEditorQuestion, ConsoleRender, DefaultTheme, prompt
+    )
+
     questions = [
         DefaultEditorQuestion('content', message=init_content, default_filename=fn_tmp),
     ]
     render = ConsoleRender(theme=DefaultTheme())
-    retval = inquirer_prompt(questions, render=render)
+    retval = prompt(questions, render=render)
     if retval is None:
         raise UserCancelledException('Operation is cancelled by user.')
     return retval['content']
