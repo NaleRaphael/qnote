@@ -16,6 +16,7 @@ subcommands = {
     'clear': cmds.ClearCommand('clear'),
     'edit': cmds.EditCommand('edit'),
     'list': cmds.ListCommand('list'),
+    'move': cmds.MoveCommand('move'),
     'notebook': cmds.NotebookCommand('notebook'),
     'open': cmds.OpenCommand('open'),
     'remove': cmds.RemoveCommand('remove'),

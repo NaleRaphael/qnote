@@ -119,6 +119,60 @@ class NoteManager(object):
 
         storer.update_note(note)
 
+    def move_note(self, uuid, nb_name):
+        storer = get_storer(self.config)
+
+        if uuid is None:
+            # Enter interactive mode and let user select note from current notebook
+            current_nb_name = HEAD.get()
+            notes = storer.get_notes_from_notebook(current_nb_name, n_limit=None)
+
+            try:
+                selected_notes = NotebookOperator(self.config).select_notes(
+                    notes, multiple=False, show_date=True, show_uuid=True,
+                    clear_after_exit=True,
+                )
+
+                assert len(selected_notes) == 1
+                note = selected_notes[0]
+            except UserCancelledException:
+                raise SafeExitException()
+        else:
+            # Check whether specific note exists
+            note = storer.get_note(uuid)
+
+        n_moved = storer.move_note_by_uuid(note.uuid, nb_name)
+
+        msg = '%s note%s ha%s been moved to notebook "%s".' % (
+            n_moved,
+            's' if n_moved > 1 else '',
+            've' if n_moved > 1 else 's',
+            nb_name
+        )
+        print(msg)
+
+    def move_note_from_selected(self, nb_name):
+        # TODO: update update_time of notebook
+        storer = get_storer(self.config)    # TODO: move this to below
+        uuids = CachedNoteUUIDs.get()
+
+        if len(uuids) == 0:
+            raise SafeExitException('No selected note.')
+
+        if not storer.check_notebook_exist(nb_name):
+            msg = 'Notebook `%s` does not exist' % nb_name
+            raise StorageCheckException(msg)
+
+        n_moved = storer.move_note_by_uuid(uuids, nb_name)
+
+        msg = '%s note%s ha%s been moved to notebook "%s".' % (
+            n_moved,
+            's' if n_moved > 1 else '',
+            've' if n_moved > 1 else 's',
+            nb_name
+        )
+        print(msg)
+
     def remove_note(self, uuid):
         storer = get_storer(self.config)
 
@@ -138,6 +192,7 @@ class NoteManager(object):
             except UserCancelledException:
                 raise SafeExitException()
         else:
+            # Check whether specific note exists
             note = storer.get_note(uuid)
 
         n_removed = storer.remove_note_by_uuid(note.uuid)

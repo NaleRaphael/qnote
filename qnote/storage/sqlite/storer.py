@@ -175,21 +175,20 @@ class SQLiteStorer(BaseStorer):
                 transaction.rollback()
                 raise StorageExecutionException(str(ex)) from ex
 
-    def remove_note_by_uuid(self, note_uuids):
-        """Remove specific notes to trash can. But what we actually do here is
-        to update notebook_id of those notes to the id of trash can."""
+    def move_note_by_uuid(self, note_uuids, nb_name):
+        """ Move notes to specific notebook. But what we actually do here is
+        to update notebook_id of those notes to the id of given notebook."""
         if not isinstance(note_uuids, list):
             note_uuids = [note_uuids]
 
-        nb_name = self.config.notebook.name_trash
-        pw_trash_can = list(Notebook.select().where(Notebook.name == nb_name))[0]
+        pw_notebook = list(Notebook.select().where(Notebook.name == nb_name))[0]
 
         with self.db.atomic() as transaction:
             try:
                 pw_notes = list(Note.select().where(Note.uuid.in_(note_uuids)))
                 query = (
                     NoteToNotebook
-                    .update({NoteToNotebook.notebook_id: pw_trash_can.id})
+                    .update({NoteToNotebook.notebook_id: pw_notebook.id})
                     .where(NoteToNotebook.note_id.in_(pw_notes))
                 )
                 n_updated = query.execute()
@@ -199,6 +198,12 @@ class SQLiteStorer(BaseStorer):
                 raise StorageExecutionException(str(ex)) from ex
 
         return n_updated
+
+    def remove_note_by_uuid(self, note_uuids):
+        """Remove specific notes to trash can. But what we actually do here is
+        to update notebook_id of those notes to the id of trash can."""
+        nb_name = self.config.notebook.name_trash
+        return self.move_note_by_uuid(note_uuids, nb_name)
 
     def check_notebook_exist(self, nb_name):
         """
