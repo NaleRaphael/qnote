@@ -1,7 +1,6 @@
-import errno, os, tempfile
+import errno, os
 from sys import stdout
 from subprocess import Popen, PIPE
-from shutil import which
 
 from qnote.internal.exceptions import (
     EditorNotFoundException, EditorNotSupportedException
@@ -29,9 +28,12 @@ class EditorBase(object):
     executable = ''
 
     def __init__(self):
+        from shutil import which
+
         assert hasattr(self, 'executable'), (
             'Attribute `executable` has not been implemented in this class.'
         )
+
         self.fn_executable = which(self.executable)
         if self.fn_executable is None:
             raise EditorNotFoundException(
@@ -42,6 +44,7 @@ class EditorBase(object):
     def open(self, fn_tmp='', init_content=''):
         # Modified solution from https://stackoverflow.com/a/6309753
         # We have to release the file handler before opening it with editor
+        import tempfile
 
         if fn_tmp == '' or fn_tmp is None:
             tf = tempfile.NamedTemporaryFile(suffix='.tmp', delete=False)
