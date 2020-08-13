@@ -22,6 +22,7 @@ subcommands = {
     'remove': cmds.RemoveCommand('remove'),
     'status': cmds.StatusCommand('status'),
     'select': cmds.SelectCommand('select'),
+    'tag': cmds.TagCommand('tag'),
 }
 
 

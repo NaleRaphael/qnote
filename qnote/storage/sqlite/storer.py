@@ -422,3 +422,25 @@ class SQLiteStorer(BaseStorer):
             except Exception as ex:
                 transaction.rollback()
                 raise StorageExecutionException(str(ex)) from ex
+
+    def get_all_tags_with_count(self):
+        query = (
+            Tag
+            .select(Tag.name, pw.fn.count(NoteToTag.tag_id).alias('count'))
+            .join(NoteToTag, join_type=pw.JOIN.LEFT_OUTER, on=(Tag.id == NoteToTag.tag_id))
+            .group_by(Tag.id)
+        )
+        result = list(query.dicts())
+        tags = [qo.Tag(v['name']) for v in result]
+        counts = [v['count'] for v in result]
+        return tags, counts
+
+    def delete_tags_by_name(self, tag_names):
+        with self.db.atomic() as transaction:
+            try:
+                query = Tag.delete().where(Tag.name.in_(tag_names))
+                n_deleted = query.execute()
+            except Exception as ex:
+                transaction.rollback()
+                raise StorageCheckException(str(ex)) from ex
+        return n_deleted

@@ -13,7 +13,7 @@ from qnote.utils import (
 )
 
 
-__all__ = ['NoteOperator', 'NotebookOperator']
+__all__ = ['NoteOperator', 'NotebookOperator', 'TagOperator']
 
 
 note_template = """# Note content (this line can be removed)
@@ -226,6 +226,18 @@ class NotebookOperator(object):
     def confirm_to_clear(self, nb_name):
         msg = (
             'Are you sure you want to delete all notes in this notebook "%s"?' % nb_name
+        )
+        return query_yes_no(msg, default='no', back_n_lines=1)
+
+
+class TagOperator(object):
+    def __init__(self, config):
+        self.config = config
+
+    def confirm_to_remove_tags(self, tags):
+        msg_tags = '\n'.join([str(v) for v in tags])
+        msg = (
+            '%s\nAre you sure you want to remove those tags listed above?' % msg_tags
         )
         return query_yes_no(msg, default='no', back_n_lines=1)
 

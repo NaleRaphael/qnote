@@ -9,6 +9,7 @@ from .open import *
 from .remove import *
 from .status import *
 from .select import *
+from .tag import *
 
 
 __all__ = []
@@ -26,5 +27,5 @@ __all__.extend(select.__all__)
 
 del (
     base_command, add, clear, edit, list, move, notebook,
-    open, remove, status, select,
+    open, remove, status, select, tag,
 )
