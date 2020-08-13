@@ -111,6 +111,26 @@ class SQLiteStorer(BaseStorer):
 
         return qo.Note.from_dict(result[0]._asdict())
 
+    def get_locating_notebook(self, note_uuid):
+        query = (
+            Note
+            .select(Notebook.name.alias('notebook_name'))
+            .where(Note.uuid == note_uuid)
+            .join(NoteToNotebook)
+            .join(Notebook)
+        )
+        result = list(query.namedtuples())
+
+        if len(result) == 0:
+            msg = 'Failed to find note in any notebook: %s' % note_uuid
+            raise StorageExecutionException(msg)
+
+        if len(result) > 1:
+            msg = 'Duplicate notes found.'
+            raise StorageExecutionException(msg)
+
+        return result[0].notebook_name
+
     def update_note(self, note):
         if not isinstance(note, qo.Note):
             raise TypeError('`note` should be an instance of %s' % qo.Note)

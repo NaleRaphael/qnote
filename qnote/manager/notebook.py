@@ -240,3 +240,16 @@ class NotebookManager(object):
                 '\n'.join([v for v in uuids])
             )
             print(msg)
+
+    def list_selected_notes(self, show_date=False, show_uuid=False):
+        uuids = CachedNoteUUIDs.get()
+
+        if len(uuids) == 0:
+            print('No note was selected.')
+        else:
+            storer = get_storer(self.config)
+            notebook_names = [storer.get_locating_notebook(v) for v in uuids]
+            msg = '\n'.join([
+                '%s  %s' % (v[0], v[1]) for v in zip(uuids, notebook_names)
+            ])
+            print(msg)

@@ -13,7 +13,8 @@ class SelectCommand(Command):
 
     _usage = """
     <prog> [--multiple] [--date] [--uuid]
-    <prog> clear"""
+    <prog> clear
+    <prog> list [--date] [--uuid]"""
 
     def __init__(self, *args, **kwargs):
         super(SelectCommand, self).__init__(*args, **kwargs)
@@ -67,6 +68,24 @@ class SelectCommand(Command):
             default=ARG_SUPPRESS,
             help='Show this help message and exit.'
         )
+
+        parser_list = subparsers.add_parser(
+            'list', prog='list', aliases=['ls'], add_help=False,
+            description='List all selected notes in cache.'
+        )
+        parser_list.add_argument(
+            '--date', action='store_true',
+            help='Show create_time and update_time of notes.'
+        )
+        parser_list.add_argument(
+            '--uuid', action='store_true',
+            help='Show uuid of notes.'
+        )
+        parser_list.add_argument(
+            '-h', '--help', action='help',
+            default=ARG_SUPPRESS,
+            help='Show this help message and exit.'
+        )
         return parser
 
     def _run_select(self, parsed_kwargs, config):
@@ -82,3 +101,13 @@ class SelectCommand(Command):
 
     def _run_clear(self, parsed_kwargs, config):
         NotebookManager(config).clear_selected_notes()
+
+    def _run_list(self, parsed_kwargs, config):
+        show_date = parsed_kwargs['date']
+        show_uuid = parsed_kwargs['uuid']
+        NotebookManager(config).list_selected_notes(
+            show_date=show_date,
+            show_uuid=show_uuid,
+        )
+
+    _run_ls = _run_list
