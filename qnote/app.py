@@ -21,6 +21,7 @@ subcommands = {
     'open': cmds.OpenCommand('open'),
     'remove': cmds.RemoveCommand('remove'),
     'status': cmds.StatusCommand('status'),
+    'search': cmds.SearchCommand('search'),
     'select': cmds.SelectCommand('select'),
     'tag': cmds.TagCommand('tag'),
 }

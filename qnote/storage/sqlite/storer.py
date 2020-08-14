@@ -111,6 +111,83 @@ class SQLiteStorer(BaseStorer):
 
         return qo.Note.from_dict(result[0]._asdict())
 
+    def get_notes_by_uuid(self, pattern):
+        query = (
+            Note
+            .select(Note, pw.fn.group_concat(Tag.name).alias('tags'))
+            .where(Note.uuid.regexp(pattern))
+            .join(NoteToTag)
+            .join(Tag)
+            .group_by(Note.uuid)
+        )
+        result = list(query.dicts())
+        return [qo.Note.from_dict(v) for v in result]
+
+    def get_notes_by_title(self, pattern):
+        if pattern.strip() == '':
+            raise ValueError('Pattern should not be only whitespace characters.')
+
+        query = (
+            Note
+            .select(Note, pw.fn.group_concat(Tag.name).alias('tags'))
+            .where(Note.title.regexp(pattern))
+            .join(NoteToTag)
+            .join(Tag)
+            .group_by(Note.uuid)
+        )
+        result = list(query.dicts())
+        return [qo.Note.from_dict(v) for v in result]
+
+    def get_notes_by_content(self, pattern):
+        if pattern.strip() == '':
+            raise ValueError('Pattern should not be only whitespace characters.')
+
+        query = (
+            Note
+            .select(Note, pw.fn.group_concat(Tag.name).alias('tags'))
+            .where(Note.content.regexp(pattern))
+            .join(NoteToTag)
+            .join(Tag)
+            .group_by(Note.uuid)
+        )
+        result = list(query.dicts())
+        return [qo.Note.from_dict(v) for v in result]
+
+    def get_notes_by_tags(self, tags):
+        """
+        Parameters
+        ----------
+        tags : qnote.object.Tags
+        """
+        if len(tags) == 0:
+            return []
+
+        str_tags = [str(v) for v in tags]
+
+        condition = (Tag.name == str_tags[0])
+        for v in str_tags[1:]:
+            condition = condition | (Tag.name == v)
+
+        query = (
+            Tag
+            .select()
+            .where(Tag.name.in_(str_tags))
+            .select(
+                Note,
+                pw.fn.group_concat(Tag.name).alias('tags'),
+                pw.fn.count(Tag.name).alias('tag_count')
+            )
+            .join(NoteToTag)
+            .join(Note)
+            .group_by(Note.uuid)
+        )
+
+        result = list(query.dicts())
+        # NOTE: We want to get those results which met all conditions at
+        # the same time (AND), so we have to filter out the others here.
+        result = [v for v in result if v['tag_count'] >= len(tags)]
+        return [qo.Note.from_dict(v) for v in result]
+
     def get_locating_notebook(self, note_uuid):
         query = (
             Note

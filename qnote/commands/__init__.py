@@ -8,6 +8,7 @@ from .notebook import *
 from .open import *
 from .remove import *
 from .status import *
+from .search import *
 from .select import *
 from .tag import *
 
@@ -23,9 +24,10 @@ __all__.extend(notebook.__all__)
 __all__.extend(open.__all__)
 __all__.extend(remove.__all__)
 __all__.extend(status.__all__)
+__all__.extend(search.__all__)
 __all__.extend(select.__all__)
 
 del (
     base_command, add, clear, edit, list, move, notebook,
-    open, remove, status, select, tag,
+    open, remove, status, search, select, tag,
 )

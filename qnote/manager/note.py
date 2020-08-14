@@ -73,6 +73,40 @@ class NoteManager(object):
         tw_config = {'max_lines': None}     # show all content
         utils_show_notes([note], self.config, tw_config)
 
+    def search_note_by_uuid(self, pattern_uuid):
+        storer = get_storer(self.config)
+        notes = storer.get_notes_by_uuid(pattern_uuid)
+
+        tw_config = {'max_lines': 3}
+        utils_show_notes(notes, self.config, tw_config)
+
+    def search_note_by_title(self, pattern_title):
+        storer = get_storer(self.config)
+        notes = storer.get_notes_by_title(pattern_title)
+
+        tw_config = {'max_lines': 3}
+        utils_show_notes(notes, self.config, tw_config)
+
+    def search_note_by_content(self, pattern_content):
+        storer = get_storer(self.config)
+        notes = storer.get_notes_by_content(pattern_content)
+
+        tw_config = {'max_lines': 3}
+        utils_show_notes(notes, self.config, tw_config)
+
+    def search_note_by_tags(self, raw_tags):
+        n_desired_tags = len(raw_tags.split(','))
+        tags = Tags.from_string_content(raw_tags)
+        if len(tags) != n_desired_tags:
+            msg = 'Tags should be in the format of "#tag_name_1, #tag_name_2", ...'
+            raise SafeExitException(msg)
+
+        storer = get_storer(self.config)
+        notes = storer.get_notes_by_tags(tags)
+
+        tw_config = {'max_lines': 3}
+        utils_show_notes(notes, self.config, tw_config)
+
     def edit_note(self, uuid, editor_name=None):
         storer = get_storer(self.config)
 
