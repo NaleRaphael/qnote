@@ -39,3 +39,17 @@ class TagManager(object):
             've' if n_deleted > 1 else 's'
         )
         print(msg)
+
+    def rename_tag(self, old_name, new_name):
+        storer = get_storer(self.config)
+
+        if not storer.check_tag_exist(old_name):
+            msg = 'Tag "%s" does not exist, so that we cannot rename it' % old_name
+            raise SafeExitException(msg)
+        if storer.check_tag_exist(new_name):
+            msg = 'Tag "%s" already exist, please choose another name' % new_name
+            raise SafeExitException(msg)
+
+        storer.rename_tag(old_name, new_name)
+        msg = 'Tag "%s" has been renamed "%s"' % (old_name, new_name)
+        print(msg)

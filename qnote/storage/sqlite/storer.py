@@ -512,6 +512,24 @@ class SQLiteStorer(BaseStorer):
         counts = [v['count'] for v in result]
         return tags, counts
 
+    def check_tag_exist(self, tag_name):
+        return Tag.select().where(Tag.name == tag_name).exists()
+
+    def rename_tag(self, old_name, new_name):
+        with self.db.atomic() as transaction:
+            try:
+                query = (
+                    Tag
+                    .update({Tag.name: new_name})
+                    .where(Tag.name == old_name)
+                )
+                n_updated = query.execute()
+                assert n_updated == 1
+            except Exception as ex:
+                transaction.rollback()
+                raise StorageExecutionException(str(ex)) from ex
+        return n_updated
+
     def delete_tags_by_name(self, tag_names):
         with self.db.atomic() as transaction:
             try:

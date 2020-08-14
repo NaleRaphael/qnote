@@ -12,7 +12,8 @@ class TagCommand(Command):
 
     _usage = """
     <prog> list
-    <prog> clear_empty"""
+    <prog> clear_empty
+    <prog> rename <old_name> <new_name>"""
 
     def __init__(self, *args, **kwargs):
         super(TagCommand, self).__init__(*args, **kwargs)
@@ -61,6 +62,27 @@ class TagCommand(Command):
             default=ARG_SUPPRESS,
             help='Show this help message and exit.'
         )
+
+        parser_rename = subparsers.add_parser(
+            'rename', prog='rename', add_help=False,
+            description=(
+                'Rename tag. Note that tag name should be escaped by slash '
+                'because the hash mark "#" indicating a comment in bash shell.'
+            )
+        )
+        parser_rename.add_argument(
+            'old_name', metavar='<old_name>',
+            help='Old name of target tag to rename.'
+        )
+        parser_rename.add_argument(
+            'new_name', metavar='<new_name>',
+            help='New name of target tag to rename.'
+        )
+        parser_rename.add_argument(
+            '-h', '--help', action='help',
+            default=ARG_SUPPRESS,
+            help='Show this help message and exit.'
+        )
         return parser
 
     def _run_list(self, parsed_kwargs, config):
@@ -72,3 +94,8 @@ class TagCommand(Command):
         TagManager(config).clear_empty_tags()
 
     _run_cle = _run_clear_empty
+
+    def _run_rename(self, parsed_kwargs, config):
+        old_name = parsed_kwargs['old_name']
+        new_name = parsed_kwargs['new_name']
+        TagManager(config).rename_tag(old_name, new_name)
