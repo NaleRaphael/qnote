@@ -4,6 +4,7 @@ from qnote.cli.operator import NotebookOperator
 from qnote.internal.exceptions import (
     UserCancelledException,
     StorageCheckException,
+    StorageExecutionException,
     StorageRuntimeError,
     SafeExitException,
 )
@@ -107,11 +108,16 @@ class NotebookManager(object):
             raise SafeExitException(msg)
 
         storer = get_storer(self.config)
+        if not storer.check_notebook_exist(old_name):
+            msg = 'Notebook "%s" does not exist, so that we cannot rename it' % old_name
+            raise SafeExitException(msg)
         if storer.check_notebook_exist(new_name):
             msg = 'Notebook "%s" already exist, please choose another name' % new_name
             raise SafeExitException(msg)
 
         storer.rename_notebook(old_name, new_name)
+        msg = 'Notebook "%s" has been renamed "%s"' % (old_name, new_name)
+        print(msg)
 
         # If HEAD is pointing to current notebook, set HEAD to new notebook
         if HEAD.get() == old_name:
@@ -248,7 +254,10 @@ class NotebookManager(object):
             print('No note was selected.')
         else:
             storer = get_storer(self.config)
-            notebook_names = [storer.get_locating_notebook(v) for v in uuids]
+            try:
+                notebook_names = [storer.get_locating_notebook(v) for v in uuids]
+            except StorageExecutionException as ex:
+                raise SafeExitException(str(ex))
             msg = '\n'.join([
                 '%s  %s' % (v[0], v[1]) for v in zip(uuids, notebook_names)
             ])

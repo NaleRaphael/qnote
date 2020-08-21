@@ -412,10 +412,12 @@ class SQLiteStorer(BaseStorer):
                     .update({Notebook.name: new_name})
                     .where(Notebook.name == old_name)
                 )
-                query.execute()
+                n_updated = query.execute()
+                assert n_updated == 1
             except Exception as ex:
                 transaction.rollback()
                 raise StorageExecutionException(str(ex)) from ex
+        return n_updated
 
     def clear_notebook(self, nb_name):
         with self.db.atomic() as transaction:
