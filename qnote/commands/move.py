@@ -14,8 +14,8 @@ class MoveCommand(Command):
     """Move specific notes to another notebook."""
 
     _usage = """
-    <prog> [--uuid <note_uuid>] [--notebook <notebook_name>]
-    <prog> selected [--notebook <notebook_name>]"""
+    <prog> <notebook_name> [--uuid <note_uuid>]
+    <prog> selected <notebook_name>"""
 
     def __init__(self, *args, **kwargs):
         super(MoveCommand, self).__init__(*args, **kwargs)
@@ -47,7 +47,7 @@ class MoveCommand(Command):
             )
         )
         parser.add_argument(
-            '--notebook', dest='notebook', metavar='<notebook_name>', required=True,
+            'notebook', metavar='<notebook_name>',
             help='Destination of the notes to moved into.'
         )
         parser.add_argument(
@@ -59,10 +59,6 @@ class MoveCommand(Command):
         parser_selected = subparsers.add_parser(
             'selected', prog='selected', aliases=['sel'], add_help=False,
             description='Remove notes from selected list (gerenated by `qnote select`).'
-        )
-        parser_selected.add_argument(
-            '--notebook', dest='notebook', metavar='<notebook_name>', required=True,
-            help='Destination of the notes to moved into.'
         )
         parser_selected.add_argument(
             '-h', '--help', action='help',

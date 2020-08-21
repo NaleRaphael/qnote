@@ -1,6 +1,4 @@
-from argparse import SUPPRESS as ARG_SUPPRESS
-
-from qnote.cli.parser import CustomArgumentParser, PassableHelpAction
+from qnote.cli.parser import CustomArgumentParser, ARG_SUPPRESS
 from qnote.internal.exceptions import SafeExitException
 from qnote.manager import NoteManager
 

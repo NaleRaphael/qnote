@@ -93,7 +93,7 @@ class NotebookCommand(Command):
 
         parser_rename = subparsers.add_parser(
             'rename', prog='rename',
-            description='Rename of notebook.'
+            description='Rename notebook.'
         )
         parser_rename.add_argument(
             'old_name', metavar='<old-name>',

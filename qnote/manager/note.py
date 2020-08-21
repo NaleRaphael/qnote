@@ -58,7 +58,6 @@ class NoteManager(object):
         utils_show_notes([note], self.config, tw_config)
 
     def show_note_from_selected(self):
-        storer = get_storer(self.config)
         uuids = CachedNoteUUIDs.get()
 
         if len(uuids) == 0:
@@ -69,6 +68,7 @@ class NoteManager(object):
         else:
             uuid = uuids[0]
 
+        storer = get_storer(self.config)
         note = storer.get_note(uuid)
         tw_config = {'max_lines': None}     # show all content
         utils_show_notes([note], self.config, tw_config)
@@ -135,7 +135,6 @@ class NoteManager(object):
         storer.update_note(note)
 
     def edit_note_from_selected(self, editor_name=None):
-        storer = get_storer(self.config)
         uuids = CachedNoteUUIDs.get()
 
         if len(uuids) == 0:
@@ -146,6 +145,7 @@ class NoteManager(object):
         else:
             uuid = uuids[0]
 
+        storer = get_storer(self.config)
         note = storer.get_note(uuid)
         edited_note = NoteOperator(self.config).edit_note(
             note, editor_name=editor_name
@@ -187,12 +187,12 @@ class NoteManager(object):
 
     def move_note_from_selected(self, nb_name):
         # TODO: update update_time of notebook
-        storer = get_storer(self.config)    # TODO: move this to below
         uuids = CachedNoteUUIDs.get()
 
         if len(uuids) == 0:
             raise SafeExitException('No selected note.')
 
+        storer = get_storer(self.config)
         if not storer.check_notebook_exist(nb_name):
             msg = 'Notebook `%s` does not exist' % nb_name
             raise StorageCheckException(msg)
