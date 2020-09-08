@@ -31,8 +31,8 @@ class ConfigBase(object):
         Name of config class.
     keys : list
         Keys to control customizable attributes. If an attribute name is
-        not listed in this list, it would be writen into the config file.
-        So that user cannot modify it.
+        not listed in this list, it would not be writen into the config
+        file. So that user cannot modify it.
     """
     name = ''
     keys = []
